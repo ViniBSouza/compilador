@@ -41,11 +41,11 @@ void imprimir_lista_tokens(fila_tokens *fila) {
 
     no *atual = fila->frente;
 
-    printf("     Lista de Tokens\n");
+    printf("\n     Lista de Tokens\n");
     printf(" %-10s | %-10s\n", "Lexema", "Simbolo");
     printf("-------------------------\n");
     while(atual != NULL) {
-        printf(" %-10s | %-10s\n", atual->t.lexema, atual->t.simbolo);
+        printf(" %-15s | %-15s\n", atual->t.lexema, atual->t.simbolo);
         atual = atual->prox;
     }
     fclose(saida);
@@ -235,8 +235,9 @@ void trata_operador_relacional(FILE *arquivo, fila_tokens *fila, int *caractere)
     else if(*caractere == '=') {
             strcpy(t.lexema, "=");
             strcpy(t.simbolo, "sig");
+            *caractere = fgetc(arquivo);
     }
-    *caractere = fgetc(arquivo);
+
     enfileira(fila, t);
 }
 
@@ -292,16 +293,17 @@ void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere) {
         trata_pontuacao(arquivo, fila, caractere);
     }
     else {
-        printf("erro\n");
+        printf(" Erro ao pegar token, caractere <%c> invalido\n", *caractere);
+        *caractere = fgetc(arquivo);
     }
 }
 
 void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
 
-    int c;  // precisa ser int, não char, para capturar fim de arquivo (EOF)
+    int c;  // precisa ser int, nï¿½o char, para capturar fim de arquivo (EOF)
 
     // Abre o arquivo fonte
-    arquivo = fopen("compila.txt", "r");
+    arquivo = fopen("codigo_compila.txt", "r");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo!\n");
         return; //return 1
@@ -309,7 +311,7 @@ void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
 
     saida = fopen("lista_tokens.txt", "w");
     if (saida == NULL) {
-        printf("Erro ao abrir o arquivo de saída!\n");
+        printf("Erro ao abrir o arquivo de saida!\n");
         fclose(arquivo);
         return; //return 1
     }
@@ -317,8 +319,8 @@ void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
     //Ler(caractere)
     c = fgetc(arquivo);
 
-    // Lê caractere por caractere até o fim
-    while (c != EOF) { //Enquanto não acabou o arquivo fonte
+    // Lï¿½ caractere por caractere atï¿½ o fim
+    while (c != EOF) { //Enquanto nï¿½o acabou o arquivo fonte
         if(c == ' ' || c == '\n' || c == '\t') {
             c = fgetc(arquivo);
             continue;
