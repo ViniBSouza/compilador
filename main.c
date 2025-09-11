@@ -41,9 +41,9 @@ void imprimir_lista_tokens(fila_tokens *fila) {
 
     no *atual = fila->frente;
 
-    printf("\n     Lista de Tokens\n");
-    printf(" %-10s | %-10s\n", "Lexema", "Simbolo");
-    printf("-------------------------\n");
+    printf("\n Lista de Tokens\n");
+    printf(" %-15s | %-15s\n", "Lexema", "Simbolo");
+    printf("----------------------------------------\n");
     while(atual != NULL) {
         printf(" %-15s | %-15s\n", atual->t.lexema, atual->t.simbolo);
         atual = atual->prox;
@@ -300,10 +300,10 @@ void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere) {
 
 void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
 
-    int c;  // precisa ser int, n�o char, para capturar fim de arquivo (EOF)
+    int c;  // precisa ser int, nao char, para capturar fim de arquivo (EOF)
 
     // Abre o arquivo fonte
-    arquivo = fopen("codigo_compila.txt", "r");
+    arquivo = fopen("teste_6.txt", "r");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo!\n");
         return; //return 1
@@ -319,8 +319,8 @@ void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
     //Ler(caractere)
     c = fgetc(arquivo);
 
-    // L� caractere por caractere at� o fim
-    while (c != EOF) { //Enquanto n�o acabou o arquivo fonte
+    // Le caractere por caractere ate o fim
+    while (c != EOF) { //Enquanto nao acabou o arquivo fonte
         if(c == ' ' || c == '\n' || c == '\t') {
             c = fgetc(arquivo);
             continue;
@@ -329,6 +329,9 @@ void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
         if(c == '{') {
             while(c != '}' && c != EOF) {
                 c = fgetc(arquivo);
+                if(c == EOF && c != '}') {
+                    printf(" Erro! Necessario fechar comentario com <}>");
+                }
             }
             c = fgetc(arquivo);
             continue;
