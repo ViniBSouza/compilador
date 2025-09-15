@@ -33,11 +33,6 @@ void enfileira(fila_tokens *fila, token t) {
 }
 
 void imprimir_lista_tokens(fila_tokens *fila) {
-    FILE *saida = fopen("lista_tokens.txt", "w");
-    if(!saida) {
-        printf("erro ao abrir arquivo");
-        return;
-    }
 
     no *atual = fila->frente;
 
@@ -48,7 +43,6 @@ void imprimir_lista_tokens(fila_tokens *fila) {
         printf(" %-15s | %-15s\n", atual->t.lexema, atual->t.simbolo);
         atual = atual->prox;
     }
-    fclose(saida);
 }
 
 void trata_digito(FILE *arquivo, fila_tokens *fila, int *caractere) {
@@ -298,58 +292,39 @@ void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere) {
     }
 }
 
-void analisador_lexical(FILE *arquivo, FILE *saida, fila_tokens *fila) {
+int main() {
+    int c;  //leitura de File em ascii
+    FILE *entrada = NULL;
+    fila_tokens fila = {NULL, NULL};
 
-    int c;  // precisa ser int, nao char, para capturar fim de arquivo (EOF)
+    entrada = fopen("codigo_compila.c", "r");
 
-    // Abre o arquivo fonte
-    arquivo = fopen("teste_6.txt", "r");
-    if (arquivo == NULL) {
+    if (entrada == NULL) {
         printf("Erro ao abrir o arquivo!\n");
-        return; //return 1
     }
 
-    saida = fopen("lista_tokens.txt", "w");
-    if (saida == NULL) {
-        printf("Erro ao abrir o arquivo de saida!\n");
-        fclose(arquivo);
-        return; //return 1
-    }
+    c = fgetc(entrada);
 
-    //Ler(caractere)
-    c = fgetc(arquivo);
-
-    // Le caractere por caractere ate o fim
     while (c != EOF) { //Enquanto nao acabou o arquivo fonte
         if(c == ' ' || c == '\n' || c == '\t') {
-            c = fgetc(arquivo);
+            c = fgetc(entrada);
             continue;
         }
 
         if(c == '{') {
             while(c != '}' && c != EOF) {
-                c = fgetc(arquivo);
+                c = fgetc(entrada);
                 if(c == EOF && c != '}') {
                     printf(" Erro! Necessario fechar comentario com <}>");
                 }
             }
-            c = fgetc(arquivo);
+            c = fgetc(entrada);
             continue;
         }
-        pega_token(arquivo, fila, &c);
-
+        pega_token(entrada, &fila, &c);
     }
 
-    // Fecha o arquivo
-    fclose(arquivo);
-    fclose(saida);
-}
-
-int main() {
-    FILE *entrada = NULL, *arquivo_tokens = NULL;
-    fila_tokens fila = {NULL, NULL};
-
-    analisador_lexical(entrada, arquivo_tokens, &fila);
+    fclose(entrada);
     imprimir_lista_tokens(&fila);
 
     return 0;
