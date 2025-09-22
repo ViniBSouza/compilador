@@ -45,7 +45,7 @@ void imprimir_lista_tokens(fila_tokens *fila) {
     }
 }
 
-void trata_digito(FILE *arquivo, fila_tokens *fila, int *caractere) {
+void trata_digito(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
     char num[20] = "";
     char temp[2];
 
@@ -59,14 +59,13 @@ void trata_digito(FILE *arquivo, fila_tokens *fila, int *caractere) {
         *caractere = fgetc(arquivo);
     }
 
-    token t;
     strcpy(t.lexema, num);
     strcpy(t.simbolo, "snumero");
 
     enfileira(fila, t);
 }
 
-void trata_identificador_palavra_reservada(FILE *arquivo, fila_tokens *fila, int *caractere) {
+void trata_identificador_palavra_reservada(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
     char id[20] = "";
     char temp[2];
 
@@ -80,7 +79,6 @@ void trata_identificador_palavra_reservada(FILE *arquivo, fila_tokens *fila, int
     }
 
     strncat(id, temp, sizeof(id) - strlen(id) - 1); // id <- id + caractere
-    token t;
 
     strcpy(t.lexema, id);
 
@@ -151,9 +149,7 @@ void trata_identificador_palavra_reservada(FILE *arquivo, fila_tokens *fila, int
     enfileira(fila, t);
 }
 
-void trata_atribuicao(FILE *arquivo, fila_tokens *fila, int *caractere) {
-
-    token t;
+void trata_atribuicao(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
 
     *caractere = fgetc(arquivo);
 
@@ -170,9 +166,8 @@ void trata_atribuicao(FILE *arquivo, fila_tokens *fila, int *caractere) {
     enfileira(fila, t);
 }
 
-void trata_operador_aritmetico(FILE *arquivo, fila_tokens *fila, int *caractere) {
+void trata_operador_aritmetico(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
 
-    token t;
 
     if(*caractere == '+') {
         strcpy(t.lexema, "+");
@@ -191,9 +186,7 @@ void trata_operador_aritmetico(FILE *arquivo, fila_tokens *fila, int *caractere)
     enfileira(fila, t);
 }
 
-void trata_operador_relacional(FILE *arquivo, fila_tokens *fila, int *caractere) {
-
-    token t;
+void trata_operador_relacional(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
 
     if(*caractere == '!') {
         *caractere = fgetc(arquivo);
@@ -235,9 +228,7 @@ void trata_operador_relacional(FILE *arquivo, fila_tokens *fila, int *caractere)
     enfileira(fila, t);
 }
 
-void trata_pontuacao(FILE *arquivo, fila_tokens *fila, int *caractere) {
-
-    token t;
+void trata_pontuacao(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
 
     if(*caractere == ';') {
         strcpy(t.lexema, ";");
@@ -267,24 +258,24 @@ void trata_pontuacao(FILE *arquivo, fila_tokens *fila, int *caractere) {
     enfileira(fila, t);
 }
 
-void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere) {
+void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
     if (isdigit(*caractere)) {
-        trata_digito(arquivo, fila, caractere);
+        trata_digito(arquivo, fila, caractere,t);
     }
     else if (isalpha(*caractere)) {
-        trata_identificador_palavra_reservada(arquivo, fila, caractere);
+        trata_identificador_palavra_reservada(arquivo, fila, caractere,t);
     }
     else if (*caractere == ':') {
-        trata_atribuicao(arquivo, fila, caractere);
+        trata_atribuicao(arquivo, fila, caractere,t);
     }
     else if (*caractere == '+' || *caractere == '-' || *caractere == '*') {
-        trata_operador_aritmetico(arquivo, fila, caractere);
+        trata_operador_aritmetico(arquivo, fila, caractere,t);
     }
     else if (*caractere == '!' || *caractere == '<' || *caractere == '>' || *caractere == '=') {
-        trata_operador_relacional(arquivo, fila, caractere);
+        trata_operador_relacional(arquivo, fila, caractere,t);
     }
     else if (*caractere == ';' || *caractere == ',' || *caractere == '(' || *caractere == ')' || *caractere == '.') {
-        trata_pontuacao(arquivo, fila, caractere);
+        trata_pontuacao(arquivo, fila, caractere,t);
     }
     else {
         printf(" Erro ao pegar token, caractere <%c> invalido\n", *caractere);
@@ -292,37 +283,57 @@ void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere) {
     }
 }
 
+int lexico(token t,FILE *arquivo,fila_tokens *fila){
+    int c;
+    c = fgetc(arquivo);
+    while(c == ' ' || c == '\n' || c == '\t' || c == '{') {
+        if(c == '{') {
+            while(c != '}' && c != EOF) {
+                c = fgetc(arquivo);
+                if(c == EOF && c != '}') {
+                    printf(" Erro! Necessario fechar comentario com <}>");
+                    return -1;
+                }
+            }
+        }
+        c = fgetc(arquivo);
+    }
+
+    if(c == EOF){
+        printf("Fim do arquivo");
+        return 2;
+    }
+
+    pega_token(arquivo, fila, &c, t);
+    return 1;
+
+}
+
+
 int main() {
-    int c;  //leitura de File em ascii
+    token t;
     FILE *entrada = NULL;
     fila_tokens fila = {NULL, NULL};
 
-    entrada = fopen("codigo_compila.c", "r");
+    entrada = fopen("codigo_teste.txt", "r");
 
     if (entrada == NULL) {
         printf("Erro ao abrir o arquivo!\n");
+        return -1;
     }
 
-    c = fgetc(entrada);
 
-    while (c != EOF) { //Enquanto nao acabou o arquivo fonte
-        if(c == ' ' || c == '\n' || c == '\t') {
-            c = fgetc(entrada);
-            continue;
-        }
 
-        if(c == '{') {
-            while(c != '}' && c != EOF) {
-                c = fgetc(entrada);
-                if(c == EOF && c != '}') {
-                    printf(" Erro! Necessario fechar comentario com <}>");
-                }
-            }
-            c = fgetc(entrada);
-            continue;
-        }
-        pega_token(entrada, &fila, &c);
+    int teste = 0;
+    if(strcpy(t.simbolo, "sprograma")){
+        printf("programa começou!!!");
     }
+
+    while(teste != 2){
+        teste = lexico(t,entrada,&fila);
+    }
+
+
 
     fclose(entrada);
     imprimir_lista_tokens(&fila);
