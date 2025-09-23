@@ -283,28 +283,27 @@ void pega_token(FILE *arquivo, fila_tokens *fila, int *caractere,token t) {
     }
 }
 
-int lexico(token t,FILE *arquivo,fila_tokens *fila){
-    int c;
-    c = fgetc(arquivo);
-    while(c == ' ' || c == '\n' || c == '\t' || c == '{') {
-        if(c == '{') {
-            while(c != '}' && c != EOF) {
-                c = fgetc(arquivo);
-                if(c == EOF && c != '}') {
+int lexico(token t,FILE *arquivo,fila_tokens *fila,int* caractere){
+
+    while(*caractere == ' ' || *caractere == '\n' || *caractere == '\t' || *caractere == '{') {
+        if(*caractere == '{') {
+            while(*caractere != '}' && *caractere != EOF) {
+                *caractere = fgetc(arquivo);
+                if(*caractere == EOF && *caractere != '}') {
                     printf(" Erro! Necessario fechar comentario com <}>");
                     return -1;
                 }
             }
         }
-        c = fgetc(arquivo);
+        *caractere = fgetc(arquivo);
     }
 
-    if(c == EOF){
+    if(*caractere == EOF){
         printf("Fim do arquivo");
         return 2;
     }
 
-    pega_token(arquivo, fila, &c, t);
+    pega_token(arquivo, fila, caractere, t);
     return 1;
 
 }
@@ -321,16 +320,21 @@ int main() {
         printf("Erro ao abrir o arquivo!\n");
         return -1;
     }
-
-
+    int caractere;
+    caractere = fgetc(entrada);
 
     int teste = 0;
     if(strcpy(t.simbolo, "sprograma")){
-        printf("programa começou!!!");
+        lexico(t,entrada,&fila,&caractere);
+        if(strcpy(t.simbolo, "sidentificador")){
+            printf("programa iniciado");
+        }else{
+            printf("ERRO: identificador nao encontrado");
+        }
     }
 
     while(teste != 2){
-        teste = lexico(t,entrada,&fila);
+        teste = lexico(t,entrada,&fila,&caractere);
     }
 
 
