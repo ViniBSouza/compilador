@@ -347,12 +347,12 @@ void analisa_et_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* carac
                     lexico(t, arquivo, fila, caractere);
                 }
                 else {
-                    printf("ERRO: esperado <;>");
+                    printf("ERRO analisa_et_variaveis: esperado <;>\n");
                 }
             }
         }
         else {
-            printf("ERRO: esperado identificador");
+            printf("ERRO analisa_et_variaveis: esperado identificador\n");
         }
     }
 }
@@ -365,16 +365,16 @@ void analisa_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caracter
                 if(strcmp(t->simbolo, "svirgula") == 0) {
                     lexico(t, arquivo, fila, caractere);
                     if(strcmp(t->simbolo, "sdoispontos") == 0) {
-                        printf("ERRO");
+                        printf("ERRO analisa_variaveis\n");
                     }
                 }
             }
             else {
-                printf("ERRO: esperado <,> ou <:>");
+                printf("ERRO analisa_variaveis: esperado <,> ou <:>\n");
             }
         }
         else {
-            printf("ERRO: esperado identificador");
+            printf("ERRO analisa_variaveis: esperado identificador\n");
         }
     }
     lexico(t, arquivo, fila, caractere);
@@ -383,7 +383,7 @@ void analisa_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caracter
 
 void analisa_tipo(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     if(strcmp(t->simbolo, "sinteiro") != 0 && strcmp(t->simbolo, "sbooleano") != 0) {
-        printf("ERRO: tipo de variavel invalida");
+        printf("ERRO analisa_tipo: tipo de variavel invalida\n");
         lexico(t, arquivo, fila, caractere);
     }
 }
@@ -400,13 +400,13 @@ void analisa_comandos(token *t, FILE *arquivo, fila_tokens *fila, int* caractere
                 }
             }
             else {
-                printf("ERRO: esperado <;>");
+                printf("ERRO analisa_comandos: esperado <;>\n");
             }
             lexico(t, arquivo, fila, caractere);
         }
     }
     else {
-        printf("ERRO: esperado sinicio");
+        printf("ERRO analisa_comandos: esperado sinicio\n");
     }
 }
 
@@ -451,15 +451,15 @@ void analisa_leia(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
                 lexico(t, arquivo, fila, caractere);
             }
             else {
-                printf("ERRO: esperado <)>");
+                printf("ERRO analisa_leia: esperado <)>\n");
             }
         }
         else {
-            printf("ERRO: esperado identificador");
+            printf("ERRO analisa_leia: esperado identificador\n");
         }
     }
     else {
-        printf("ERRO: esperado <(>");
+        printf("ERRO analisa_leia: esperado <(>\n");
     }
 }
 
@@ -473,15 +473,15 @@ void analisa_escreva(token *t, FILE *arquivo, fila_tokens *fila, int* caractere)
                 lexico(t, arquivo, fila, caractere);
             }
             else {
-                printf("ERRO: esperado <)>");
+                printf("ERRO analisa_escreva: esperado <)>\n");
             }
         }
         else {
-            printf("ERRO: esperado identificador");
+            printf("ERRO analisa_escreva: esperado identificador\n");
         }
     }
     else {
-        printf("ERRO: esperado <(>");
+        printf("ERRO analisa_escreva: esperado <(>\n");
     }
 }
 
@@ -493,7 +493,7 @@ void analisa_enquanto(token *t, FILE *arquivo, fila_tokens *fila, int* caractere
         analisa_comando_simples(t, arquivo, fila, caractere);
     }
     else {
-        printf("ERRO: esperado <faca>");
+        printf("ERRO analisa_enquanto: esperado <faca>\n");
     }
 }
 
@@ -509,7 +509,7 @@ void analisa_se(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
         }
     }
     else {
-        printf("ERRO: esperado <entao>");
+        printf("ERRO analisa_se: esperado <entao>\n");
     }
 }
 
@@ -526,7 +526,7 @@ void analisa_subrotinas(token *t, FILE *arquivo, fila_tokens *fila, int* caracte
             lexico(t, arquivo, fila, caractere);
         }
         else {
-            printf("ERRO: esperado <;>");
+            printf("ERRO analisa_subrotinas: esperado <;>\n");
         }
     }
 }
@@ -539,11 +539,11 @@ void analisa_declaracao_procedimento(token *t, FILE *arquivo, fila_tokens *fila,
             analisa_bloco(t, arquivo, fila, caractere);
         }
         else {
-            printf("ERRO: esperado <;>");
+            printf("ERRO analisa_declaracao_procedimento: esperado <;>\n");
         }
     }
     else {
-        printf("ERRO: esperado identificador");
+        printf("ERRO analisa_declaracao_procedimento: esperado identificador\n");
     }
 }
 
@@ -560,15 +560,15 @@ void analisa_declaracao_funcao(token *t, FILE *arquivo, fila_tokens *fila, int* 
                 }
             }
             else {
-                printf("ERRO: tipo invalido");
+                printf("ERRO analisa_declaracao_funcao: tipo invalido\n");
             }
         }
         else {
-            printf("ERRO: esperado <:>");
+            printf("ERRO analisa_declaracao_funcao: esperado <:>\n");
         }
     }
     else {
-        printf("ERRO: esperado identificador");
+        printf("ERRO analisa_declaracao_funcao: esperado identificador\n");
     }
 }
 
@@ -620,14 +620,36 @@ void analisa_fator(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
             lexico(t, arquivo, fila, caractere);
         }
         else {
-            printf("ERRO: esperado <)>");
+            printf("ERRO analisa_fator: esperado <)>\n");
         }
     }
     else if(strcmp(t->lexema, "verdadeiro") == 0 || strcmp(t->lexema, "falso") == 0) {
         lexico(t, arquivo, fila, caractere);
     }
     else {
-        printf("ERRO: entrada invalida");
+        printf("ERRO analisa_fator: entrada invalida\n");
+    }
+}
+
+void analisa_atribuicao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    lexico(t, arquivo, fila, caractere);
+    if(strcmp(t->simbolo, "sidentificador") == 0) {
+
+    }
+    else {
+        printf("ERRO analisa_atribuicao: esperado identificador\n");
+    }
+}
+
+void analisa_chamada_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "sidentificador") != 0) {
+        printf("ERRO analisa_chamada_procedimento: esperado identificador\n");
+    }
+}
+
+void analisa_chamada_funcao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "sidentificador") != 0) {
+        printf("ERRO analisa_chamada_funcao: esperado identificador\n");
     }
 }
 
@@ -636,7 +658,7 @@ int main() {
     FILE *entrada = NULL;
     fila_tokens fila = {NULL, NULL};
 
-    entrada = fopen("codigo_compila.c", "r");
+    entrada = fopen("sint9.txt", "r");
 
     if (entrada == NULL) {
         printf("Erro ao abrir o arquivo!\n");
@@ -661,19 +683,19 @@ int main() {
                     //senao erro
                 }
                 else {
-                    printf("ERRO: esperado <.>");
+                    printf("ERRO programa: esperado <.>\n");
                 }
             }
             else {
-                printf("ERRO: esperado <;>");
+                printf("ERRO programa: esperado <;>");
             }
         }
         else{
-            printf("ERRO: identificador nao encontrado\n");
+            printf("ERRO programa: identificador nao encontrado\n");
         }
     }
     else  {
-        printf("ERRO: sprograma nao encontrado\n");
+        printf("ERRO programa: sprograma nao encontrado\n");
     }
 
     while(teste != 2){
