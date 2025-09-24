@@ -633,12 +633,7 @@ void analisa_fator(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
 
 void analisa_atribuicao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     lexico(t, arquivo, fila, caractere);
-    if(strcmp(t->simbolo, "sidentificador") == 0) {
-
-    }
-    else {
-        printf("ERRO analisa_atribuicao: esperado identificador\n");
-    }
+    analisa_expressao(t, arquivo, fila, caractere);
 }
 
 void analisa_chamada_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
