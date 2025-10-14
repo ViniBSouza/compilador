@@ -18,39 +18,15 @@ typedef struct {
     no *tras;
 } fila_tokens;
 
-// ====== Funcoes utilitarias da fila ======
-void enfileira(fila_tokens *fila, token t);
-void imprimir_lista_tokens(fila_tokens *fila);
-
-// ====== Analisador lexico ======
-int lexico(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void trata_digito(FILE *arquivo, fila_tokens *fila, int *caractere, token *t);
-void trata_identificador_palavra_reservada(FILE *arquivo, fila_tokens *fila, int *caractere, token *t);
-void trata_pontuacao(FILE *arquivo, fila_tokens *fila, int *caractere, token *t);
-void trata_operador_relacional(FILE *arquivo, fila_tokens *fila, int *caractere, token *t);
-
-// ====== Analisador sintatico ======
-void analisa_bloco(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_et_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_subrotinas(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
+// ====== Prototipos Analisador sintatico ======
 void analisa_comandos(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_atrib_chprocedimento(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_expressao(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
+void analisa_comando_simples(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
 void analisa_expressao_simples(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
 void analisa_termo(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
 void analisa_fator(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_tipo(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_comando_simples(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_se(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_enquanto(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_leia(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_escreva(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_atribuicao(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_chamada_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_chamada_funcao(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
 void analisa_declaracao_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
-void analisa_declaracao_funcao(token *t, FILE *arquivo, fila_tokens *fila, int *caractere);
+void analisa_subrotinas(token *t, FILE *arquivo, fila_tokens *fila, int* caractere);
+void analisa_bloco(token *t, FILE *arquivo, fila_tokens *fila, int* caractere);
 
 void enfileira(fila_tokens *fila, token t) {
     no *novo = malloc(sizeof(no));
@@ -335,56 +311,31 @@ int lexico(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     return 1;
 }
 
-void analisa_bloco(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    lexico(t, arquivo, fila, caractere);
-    analisa_et_variaveis(t, arquivo, fila, caractere);
-    analisa_subrotinas(t, arquivo, fila, caractere);
-    analisa_comandos(t, arquivo, fila, caractere);
+void analisa_chamada_funcao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "sidentificador") != 0) {
+        printf("ERRO analisa_chamada_funcao: esperado identificador\n");
+    }
 }
 
-void analisa_et_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    if(strcmp(t->simbolo, "svar") == 0) {
+void analisa_chamada_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    //if(strcmp(t->simbolo, "sidentificador") != 0) {
+    //    printf("ERRO analisa_chamada_procedimento: esperado identificador\n");
+    //}
+}
+
+void analisa_expressao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    analisa_expressao_simples(t, arquivo, fila, caractere);
+    if(strcmp(t->simbolo, "smaior") == 0 || strcmp(t->simbolo, "smaiorig") == 0 ||
+       strcmp(t->simbolo, "sig") == 0 || strcmp(t->simbolo, "smenor") == 0 ||
+       strcmp(t->simbolo, "smenorig") == 0 || strcmp(t->simbolo, "sdif") == 0) {
         lexico(t, arquivo, fila, caractere);
-        if(strcmp(t->simbolo, "sidentificador") == 0) {
-            while(strcmp(t->simbolo, "sidentificador") == 0) {
-                analisa_variaveis(t, arquivo, fila, caractere);
-                if(strcmp(t->simbolo, "sponto_virgula") == 0) {
-                    lexico(t, arquivo, fila, caractere);
-                }
-                else {
-                    printf("ERRO analisa_et_variaveis: esperado <;>\n");
-                }
-            }
-        }
-        else {
-            printf("ERRO analisa_et_variaveis: esperado identificador\n");
-        }
-    }
+        analisa_expressao_simples(t, arquivo, fila, caractere);
+       }
 }
 
-void analisa_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    while(strcmp(t->simbolo, "sdoispontos") != 0) {
-        if(strcmp(t->simbolo, "sidentificador") == 0) {
-            lexico(t, arquivo, fila, caractere);
-            if(strcmp(t->simbolo, "svirgula") == 0 || strcmp(t->simbolo, "sdoispontos") == 0) {
-                if(strcmp(t->simbolo, "svirgula") == 0) {
-                    lexico(t, arquivo, fila, caractere);
-                    if(strcmp(t->simbolo, "sdoispontos") == 0) {
-                        printf("ERRO analisa_variaveis\n");
-                        exit(1);
-                    }
-                }
-            }
-            else {
-                printf("ERRO analisa_variaveis: esperado <,> ou <:>\n");
-            }
-        }
-        else {
-            printf("ERRO analisa_variaveis: esperado identificador\n");
-        }
-    }
+void analisa_atribuicao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     lexico(t, arquivo, fila, caractere);
-    analisa_tipo(t, arquivo, fila, caractere);
+    analisa_expressao(t, arquivo, fila, caractere);
 }
 
 void analisa_tipo(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
@@ -392,61 +343,6 @@ void analisa_tipo(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
         printf("ERRO analisa_tipo: tipo de variavel invalida\n");
     }
     lexico(t, arquivo, fila, caractere);
-}
-
-void analisa_comandos(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    if(strcmp(t->simbolo, "sinicio") == 0) {
-        lexico(t, arquivo, fila, caractere);
-        analisa_comando_simples(t, arquivo, fila, caractere);
-        while(strcmp(t->simbolo, "sfim") != 0) {
-            if(strcmp(t->simbolo, "sponto_virgula") == 0) {
-                lexico(t, arquivo, fila, caractere);
-                if(strcmp(t->simbolo, "sfim") != 0) {
-                    analisa_comando_simples(t, arquivo, fila, caractere);
-                }
-            }
-            else {
-                printf("ERRO analisa_comandos: esperado <;>\n");
-                exit(1);
-            }
-
-        }
-        lexico(t, arquivo, fila, caractere);
-    }
-    else {
-        printf("ERRO analisa_comandos: esperado sinicio\n");
-    }
-}
-
-void analisa_comando_simples(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    if(strcmp(t->simbolo, "sidentificador") == 0) {
-        analisa_atrib_chprocedimento(t, arquivo, fila, caractere);
-    }
-    else if(strcmp(t->simbolo, "sse") == 0) {
-        analisa_se(t, arquivo, fila, caractere);
-    }
-    else if(strcmp(t->simbolo, "senquanto") == 0) {
-        analisa_enquanto(t, arquivo, fila, caractere);
-    }
-    else if(strcmp(t->simbolo, "sleia") == 0) {
-        analisa_leia(t, arquivo, fila, caractere);
-    }
-    else if(strcmp(t->simbolo, "sescreva") == 0) {
-        analisa_escreva(t, arquivo, fila, caractere);
-    }
-    else {
-        analisa_comandos(t, arquivo, fila, caractere);
-    }
-}
-
-void analisa_atrib_chprocedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    lexico(t, arquivo, fila, caractere);
-    if(strcmp(t->simbolo, "satribuicao") == 0) {
-        analisa_atribuicao(t, arquivo, fila, caractere);
-    }
-    else {
-        analisa_chamada_procedimento(t, arquivo, fila, caractere);
-    }
 }
 
 void analisa_leia(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
@@ -493,15 +389,58 @@ void analisa_escreva(token *t, FILE *arquivo, fila_tokens *fila, int* caractere)
     }
 }
 
-void analisa_enquanto(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+void analisa_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    while(strcmp(t->simbolo, "sdoispontos") != 0) {
+        if(strcmp(t->simbolo, "sidentificador") == 0) {
+            lexico(t, arquivo, fila, caractere);
+            if(strcmp(t->simbolo, "svirgula") == 0 || strcmp(t->simbolo, "sdoispontos") == 0) {
+                if(strcmp(t->simbolo, "svirgula") == 0) {
+                    lexico(t, arquivo, fila, caractere);
+                    if(strcmp(t->simbolo, "sdoispontos") == 0) {
+                        printf("ERRO analisa_variaveis\n");
+                        exit(1);
+                    }
+                }
+            }
+            else {
+                printf("ERRO analisa_variaveis: esperado <,> ou <:>\n");
+            }
+        }
+        else {
+            printf("ERRO analisa_variaveis: esperado identificador\n");
+        }
+    }
     lexico(t, arquivo, fila, caractere);
-    analisa_expressao(t, arquivo, fila, caractere);
-    if(strcmp(t->simbolo, "sfaca") == 0) {
+    analisa_tipo(t, arquivo, fila, caractere);
+}
+
+void analisa_et_variaveis(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "svar") == 0) {
         lexico(t, arquivo, fila, caractere);
-        analisa_comando_simples(t, arquivo, fila, caractere);
+        if(strcmp(t->simbolo, "sidentificador") == 0) {
+            while(strcmp(t->simbolo, "sidentificador") == 0) {
+                analisa_variaveis(t, arquivo, fila, caractere);
+                if(strcmp(t->simbolo, "sponto_virgula") == 0) {
+                    lexico(t, arquivo, fila, caractere);
+                }
+                else {
+                    printf("ERRO analisa_et_variaveis: esperado <;>\n");
+                }
+            }
+        }
+        else {
+            printf("ERRO analisa_et_variaveis: esperado identificador\n");
+        }
+    }
+}
+
+void analisa_atrib_chprocedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    lexico(t, arquivo, fila, caractere);
+    if(strcmp(t->simbolo, "satribuicao") == 0) {
+        analisa_atribuicao(t, arquivo, fila, caractere);
     }
     else {
-        printf("ERRO analisa_enquanto: esperado <faca>\n");
+        analisa_chamada_procedimento(t, arquivo, fila, caractere);
     }
 }
 
@@ -521,21 +460,15 @@ void analisa_se(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     }
 }
 
-void analisa_subrotinas(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    while(strcmp(t->simbolo, "sprocedimento") == 0 || strcmp(t->simbolo, "sfuncao") == 0) {
-        if(strcmp(t->simbolo, "sprocedimento") == 0) {
-            analisa_declaracao_procedimento(t, arquivo, fila, caractere);
-        }
-        else {
-            analisa_declaracao_funcao(t, arquivo, fila, caractere);
-        }
-
-        if(strcmp(t->simbolo, "sponto_virgula") == 0) {
-            lexico(t, arquivo, fila, caractere);
-        }
-        else {
-            printf("ERRO analisa_subrotinas: esperado <;>\n");
-        }
+void analisa_enquanto(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    lexico(t, arquivo, fila, caractere);
+    analisa_expressao(t, arquivo, fila, caractere);
+    if(strcmp(t->simbolo, "sfaca") == 0) {
+        lexico(t, arquivo, fila, caractere);
+        analisa_comando_simples(t, arquivo, fila, caractere);
+    }
+    else {
+        printf("ERRO analisa_enquanto: esperado <faca>\n");
     }
 }
 
@@ -580,34 +513,29 @@ void analisa_declaracao_funcao(token *t, FILE *arquivo, fila_tokens *fila, int* 
     }
 }
 
-void analisa_expressao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    analisa_expressao_simples(t, arquivo, fila, caractere);
-    if(strcmp(t->simbolo, "smaior") == 0 || strcmp(t->simbolo, "smaiorig") == 0 ||
-       strcmp(t->simbolo, "sig") == 0 || strcmp(t->simbolo, "smenor") == 0 ||
-       strcmp(t->simbolo, "smenorig") == 0 || strcmp(t->simbolo, "sdif") == 0) {
-        lexico(t, arquivo, fila, caractere);
-        analisa_expressao_simples(t, arquivo, fila, caractere);
-       }
+void analisa_subrotinas(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    while(strcmp(t->simbolo, "sprocedimento") == 0 || strcmp(t->simbolo, "sfuncao") == 0) {
+        if(strcmp(t->simbolo, "sprocedimento") == 0) {
+            analisa_declaracao_procedimento(t, arquivo, fila, caractere);
+        }
+        else {
+            analisa_declaracao_funcao(t, arquivo, fila, caractere);
+        }
+
+        if(strcmp(t->simbolo, "sponto_virgula") == 0) {
+            lexico(t, arquivo, fila, caractere);
+        }
+        else {
+            printf("ERRO analisa_subrotinas: esperado <;>\n");
+        }
+    }
 }
 
-void analisa_expressao_simples(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    if(strcmp(t->simbolo, "smais") == 0 || strcmp(t->simbolo, "smenos") == 0) {
-        lexico(t, arquivo, fila, caractere);
-    }
-    analisa_termo(t, arquivo, fila, caractere);
-    while(strcmp(t->simbolo, "smais") == 0 || strcmp(t->simbolo, "smenos") == 0 || strcmp(t->simbolo, "sou") == 0) {
-        lexico(t, arquivo, fila, caractere);
-        analisa_termo(t, arquivo, fila, caractere);
-    }
-
-}
-
-void analisa_termo(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    analisa_fator(t, arquivo, fila, caractere);
-    while(strcmp(t->simbolo, "smult") == 0 || strcmp(t->simbolo, "sdiv") == 0 || strcmp(t->simbolo, "se") == 0) {
-        lexico(t, arquivo, fila, caractere);
-        analisa_fator(t, arquivo, fila, caractere);
-    }
+void analisa_bloco(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    lexico(t, arquivo, fila, caractere);
+    analisa_et_variaveis(t, arquivo, fila, caractere);
+    analisa_subrotinas(t, arquivo, fila, caractere);
+    analisa_comandos(t, arquivo, fila, caractere);
 }
 
 void analisa_fator(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
@@ -642,20 +570,68 @@ void analisa_fator(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
     }
 }
 
-void analisa_atribuicao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    lexico(t, arquivo, fila, caractere);
-    analisa_expressao(t, arquivo, fila, caractere);
+void analisa_termo(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    analisa_fator(t, arquivo, fila, caractere);
+    while(strcmp(t->simbolo, "smult") == 0 || strcmp(t->simbolo, "sdiv") == 0 || strcmp(t->simbolo, "se") == 0) {
+        lexico(t, arquivo, fila, caractere);
+        analisa_fator(t, arquivo, fila, caractere);
+    }
 }
 
-void analisa_chamada_procedimento(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    //if(strcmp(t->simbolo, "sidentificador") != 0) {
-    //    printf("ERRO analisa_chamada_procedimento: esperado identificador\n");
-    //}
+void analisa_expressao_simples(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "smais") == 0 || strcmp(t->simbolo, "smenos") == 0) {
+        lexico(t, arquivo, fila, caractere);
+    }
+    analisa_termo(t, arquivo, fila, caractere);
+    while(strcmp(t->simbolo, "smais") == 0 || strcmp(t->simbolo, "smenos") == 0 || strcmp(t->simbolo, "sou") == 0) {
+        lexico(t, arquivo, fila, caractere);
+        analisa_termo(t, arquivo, fila, caractere);
+    }
+
 }
 
-void analisa_chamada_funcao(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
-    if(strcmp(t->simbolo, "sidentificador") != 0) {
-        printf("ERRO analisa_chamada_funcao: esperado identificador\n");
+void analisa_comandos(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "sinicio") == 0) {
+        lexico(t, arquivo, fila, caractere);
+        analisa_comando_simples(t, arquivo, fila, caractere);
+        while(strcmp(t->simbolo, "sfim") != 0) {
+            if(strcmp(t->simbolo, "sponto_virgula") == 0) {
+                lexico(t, arquivo, fila, caractere);
+                if(strcmp(t->simbolo, "sfim") != 0) {
+                    analisa_comando_simples(t, arquivo, fila, caractere);
+                }
+            }
+            else {
+                printf("ERRO analisa_comandos: esperado <;>\n");
+                exit(1);
+            }
+
+        }
+        lexico(t, arquivo, fila, caractere);
+    }
+    else {
+        printf("ERRO analisa_comandos: esperado sinicio\n");
+    }
+}
+
+void analisa_comando_simples(token *t, FILE *arquivo, fila_tokens *fila, int* caractere) {
+    if(strcmp(t->simbolo, "sidentificador") == 0) {
+        analisa_atrib_chprocedimento(t, arquivo, fila, caractere);
+    }
+    else if(strcmp(t->simbolo, "sse") == 0) {
+        analisa_se(t, arquivo, fila, caractere);
+    }
+    else if(strcmp(t->simbolo, "senquanto") == 0) {
+        analisa_enquanto(t, arquivo, fila, caractere);
+    }
+    else if(strcmp(t->simbolo, "sleia") == 0) {
+        analisa_leia(t, arquivo, fila, caractere);
+    }
+    else if(strcmp(t->simbolo, "sescreva") == 0) {
+        analisa_escreva(t, arquivo, fila, caractere);
+    }
+    else {
+        analisa_comandos(t, arquivo, fila, caractere);
     }
 }
 
