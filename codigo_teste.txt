@@ -1,23 +1,30 @@
-programa test;
-var v: inteiro;
-i,max, juro,: inteiro;
+{Teste 1 - OK}
+programa test1;
+var a,b,c: inteiro;
+{proc 1}
+procedimento analisa1;
+var a, x: inteiro;
+z: booleano;
 inicio
-enquanto v != -1
-faca
-inicio
-{leia o valor inicial}
-leia(v);
-{leia a taxa de juros }
-leia(juro);
-{ Leia o periodo };
-leia(max);
-valor:= 1;
-i:= 1;
-enquanto i <= max { (1+juro) elevado a n }
+se x>1 entao
+x:= 0;
+leia(z);
+enquanto (a != 89) e (a<= 1000) {condicao de parada}
 faca inicio
-valor:= valor*(1+juro);
-i:= i+1
+a:= x+z
 fim;
-escreva(valor)
-fim
+escreva(a)
+fim;
+procedimento analisa2;
+inicio
+leia(a);
+b:= a*a+(c div b)
+fim;
+inicio
+analisa1;
+analisa2;
+se b > (c+ a*a)
+entao escreva(b)
+senao escreva(c)
 fim.
+{fim}
