@@ -7,6 +7,7 @@
 
 token token_atual;
 FILE *arquivo = NULL;
+FILE *arquivo_obj = NULL;
 int caractere;
 
 

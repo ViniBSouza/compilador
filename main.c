@@ -38,7 +38,6 @@ void gera(int rot, const char *arg1, int arg2, const char *arg3) {
     fprintf(arquivo_obj, "%d %s %d %s\n", rot, arg1, arg2, arg3);
 }
 
-
 /*
 char converte_posfixa(char expressao) { //expressao = x-3
 
@@ -124,7 +123,7 @@ int pesquisa_duplicvar_tabela(const char *lexema) {
 }
 
 int pesquisa_duplicfunc_tabela(const char *lexema) {
-    for(int i = 0; i < tSimb.tamanho; i++) {
+    for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             return 0;
         }
@@ -187,10 +186,10 @@ int pesquisa_declproc_tabela() {
     return 1;
 }
 
-int pesquisa_tabela(const char *lexema, char nivel, int *ind) {
+int pesquisa_tabela(const char *lexema, int *ind) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
-            ind = i;
+            *ind = i;
             return 1;
         }
     }
@@ -480,7 +479,6 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
 }
 
 void analisa_subrotinas(fila_tokens *fila) {
-
     int auxrot;
     int flag = 0;
 
@@ -520,10 +518,10 @@ void analisa_bloco(fila_tokens *fila) {
 }
 
 void analisa_fator(fila_tokens *fila) {
-    int ind = 0;
+    int ind;
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         printf("%s", token_atual.lexema);
-        if(pesquisa_tabela(token_atual.lexema, "L", &ind)) {
+        if(pesquisa_tabela(token_atual.lexema, &ind)) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
                     analisa_chamada_funcao(fila);
                 }
@@ -656,7 +654,7 @@ int main() {
     if(strcmp(token_atual.simbolo, "sprograma") == 0){
         lexico(&fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0){
-            insere_tabela(token_atual.lexema, "nomedeprograma", "", 0);
+            insere_tabela(token_atual.lexema, "nomedeprograma", "L", 0);
             lexico(&fila);
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
                 analisa_bloco(&fila);

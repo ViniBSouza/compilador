@@ -21,6 +21,7 @@ typedef struct {
 
 extern token token_atual;
 extern FILE *arquivo;
+extern FILE *arquivo_obj;
 extern int caractere;
 
 
