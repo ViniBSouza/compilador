@@ -17,6 +17,7 @@ typedef struct {
 }tabela_simbolos;
 
 tabela_simbolos tSimb = {NULL, 0};
+char var_proc[50];
 int endereco_global = 0;
 int rotulo = 0;
 
@@ -209,18 +210,24 @@ int pesquisa_declfunc_tabela() {
     return 1;
 }
 
+//fazer
 void analisa_chamada_funcao(fila_tokens *fila) {
-
+    pesquisa_declvarfunc_tabela(token_atual.lexema);
     printf("oi sou o %s\n", token_atual.lexema);
     lexico(fila);
 }
 
+//fazer
 void analisa_chamada_procedimento(fila_tokens *fila) {
-    /*
-    if(strcmp(token_atual.simbolo, "sidentificador") != 0) {
-       printf("ERRO analisa_chamado_procedimento: esperado identificador\n");
+
+    printf("TESTE: %s \n", token_atual.lexema);
+    for(int i = tSimb.tamanho - 1; i >= 0; i--) {
+        if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
+            printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
+            printf("%s", tSimb.simbolos[i].lexema);
+        }
     }
-    */
+    lexico(fila);
 }
 
 void analisa_expressao(fila_tokens *fila) {
@@ -365,6 +372,7 @@ void analisa_et_variaveis(fila_tokens *fila) {
 }
 
 void analisa_atrib_chprocedimento(fila_tokens *fila) {
+    strcpy(var_proc, token_atual.lexema);
     lexico(fila);
     if(strcmp(token_atual.simbolo, "satribuicao") == 0) {
         analisa_atribuicao(fila);
@@ -372,6 +380,7 @@ void analisa_atrib_chprocedimento(fila_tokens *fila) {
     else {
         analisa_chamada_procedimento(fila);
     }
+    strcpy(var_proc, "");
 }
 
 void analisa_se(fila_tokens *fila) {
