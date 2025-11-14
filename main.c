@@ -17,7 +17,6 @@ typedef struct {
 }tabela_simbolos;
 
 tabela_simbolos tSimb = {NULL, 0};
-char var_proc[50];
 int endereco_global = 0;
 int rotulo = 0;
 
@@ -212,22 +211,27 @@ int pesquisa_declfunc_tabela() {
 
 //fazer
 void analisa_chamada_funcao(fila_tokens *fila) {
-    pesquisa_declvarfunc_tabela(token_atual.lexema);
+    /* pesquisa_declvarfunc_tabela(token_atual.lexema);
     printf("oi sou o %s\n", token_atual.lexema);
     lexico(fila);
+    */
 }
 
 //fazer
-void analisa_chamada_procedimento(fila_tokens *fila) {
-
-    printf("TESTE: %s \n", token_atual.lexema);
+int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
-        if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
-            printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
-            printf("%s", tSimb.simbolos[i].lexema);
+        if(strcmp(ident_proc, tSimb.simbolos[i].lexema) == 0) {
+            if(strcmp(tSimb.simbolos[i].tipo, "procedimento") == 0) {
+                printf("%s", tSimb.simbolos[i].lexema);
+                return 0; //verdadeiro: proc existe
+            }
+            else {
+                return 1;
+            }
         }
     }
-    lexico(fila);
+    printf("Erro: procedimento %s nao existe", ident_proc);
+    return 1;
 }
 
 void analisa_expressao(fila_tokens *fila) {
@@ -372,15 +376,15 @@ void analisa_et_variaveis(fila_tokens *fila) {
 }
 
 void analisa_atrib_chprocedimento(fila_tokens *fila) {
-    strcpy(var_proc, token_atual.lexema);
+    char ident_proc[50];
+    strcpy(ident_proc, token_atual.lexema);
     lexico(fila);
     if(strcmp(token_atual.simbolo, "satribuicao") == 0) {
         analisa_atribuicao(fila);
     }
     else {
-        analisa_chamada_procedimento(fila);
+        analisa_chamada_procedimento(fila, ident_proc);
     }
-    strcpy(var_proc, "");
 }
 
 void analisa_se(fila_tokens *fila) {
@@ -529,7 +533,7 @@ void analisa_bloco(fila_tokens *fila) {
 void analisa_fator(fila_tokens *fila) {
     int ind;
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
-        printf("%s", token_atual.lexema);
+        printf("%s\n", token_atual.lexema);
         if(pesquisa_tabela(token_atual.lexema, &ind)) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
                     analisa_chamada_funcao(fila);
