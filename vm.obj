@@ -1,0 +1,26 @@
+    START
+    ALLOC 0,1
+    JMP L2
+L1  NULL
+    ALLOC 1,1
+    LDC 100
+    STORE 1
+    LDV 1
+    STORE 0
+    DALLOC 1,1
+    RETURNF
+    NULL
+L2 NULL
+    ALLOC 2,1
+    LDC 100
+    STORE 2
+    CALL L1
+    LDV 2
+    ADD
+    PRN
+    DALLOC 2,1
+    DALLOC 0,1
+    HLT
+
+
+    
