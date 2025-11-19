@@ -15,6 +15,13 @@ a:= x+z
 fim;
 escreva(a)
 fim;
+
+funcao oii: booleano;
+var z: inteiro;
+inicio
+leia(z);
+fim;
+
 procedimento analisa2;
 inicio
 leia(a);

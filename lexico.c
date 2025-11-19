@@ -4,12 +4,10 @@
 #include <ctype.h>
 #include "lexico.h"
 
-
 token token_atual;
 FILE *arquivo = NULL;
 FILE *arquivo_obj = NULL;
 int caractere;
-
 
 void enfileira(fila_tokens *fila, token t) {
     no *novo = malloc(sizeof(no));
@@ -180,7 +178,7 @@ void pega_token(fila_tokens *fila) {
     else if (caractere == '!' || caractere == '<' || caractere == '>' || caractere == '=') trata_operador_relacional(fila);
     else if (caractere == ';' || caractere == ',' || caractere == '(' || caractere == ')' || caractere == '.') trata_pontuacao(fila);
     else {
-        printf(" Erro: caractere inválido <%c>\n", caractere);
+        printf(" Erro: caractere invï¿½lido <%c>\n", caractere);
         caractere = fgetc(arquivo);
     }
 }
@@ -191,7 +189,7 @@ int lexico(fila_tokens *fila) {
             while(caractere != '}' && caractere != EOF) {
                 caractere = fgetc(arquivo);
                 if(caractere == EOF) {
-                    printf(" Erro! Comentário não fechado\n");
+                    printf(" Erro! Comentï¿½rio nï¿½o fechado\n");
                     return -1;
                 }
             }

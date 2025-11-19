@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "lexico.h"
+#include "estruturas.h"
 
 typedef struct {
     char lexema[50];
@@ -17,7 +18,8 @@ typedef struct {
 }tabela_simbolos;
 
 tabela_simbolos tSimb = {NULL, 0};
-int endereco_global = 0;
+int endereco_tabela = 0;
+int endereco_mvd = 1;
 int rotulo = 0;
 
 void analisa_comandos(fila_tokens *fila);
@@ -29,17 +31,66 @@ void analisa_declaracao_procedimento(fila_tokens *fila);
 void analisa_subrotinas(fila_tokens *fila);
 void analisa_bloco(fila_tokens *fila);
 
-void gera(int rot, const char *arg1, int arg2, const char *arg3) {
-    if (arquivo_obj == NULL) {
+void gera(int rot, const char *arg1, int arg2, int arg3) {
+    if(arquivo_obj == NULL) {
         printf("Erro: arquivo .obj nao foi aberto\n");
         return;
     }
 
-    fprintf(arquivo_obj, "%d %s %d %s\n", rot, arg1, arg2, arg3);
+    if(rot >= 0) {
+        fprintf(arquivo_obj, "%d   ", rot);
+    }
+    else {
+        fprintf(arquivo_obj, "    ");
+    }
+
+    fprintf(arquivo_obj, "%s       ", arg1);
+
+    if(arg2 >= 0) {
+        fprintf(arquivo_obj, "%d   ", arg2);
+    }
+    else {
+        fprintf(arquivo_obj, "    ");
+    }
+
+    if(arg3 >= 0) {
+        fprintf(arquivo_obj, "%d   \n", arg3);
+    }
+    else {
+        fprintf(arquivo_obj, "    \n");
+    }
 }
 
 /*
-char converte_posfixa(char expressao) { //expressao = x-3
+int precedencia(char *operador) {
+    switch(operador) {
+        case:
+    }
+}
+*/
+
+int verifica_procedencia(char *operador1, char *operador2) {
+    if(precedencia(operador1) > precedencia(operador2)) {
+        return 1;
+    }
+    return 0;
+}
+/*
+void analisa_operador(char *operador) {
+
+    while()
+
+}
+*/
+/*
+void posfixa() {
+    for(int i = 0; i < n; i++) {
+        if(strcmp())
+    }
+}
+*/
+/*
+char converte_posfixa(const char *lexema) { //expressao = x-3
 
     int tam = strlen(expressao);
     for(int i = 0; i < tam; i++) {
@@ -78,8 +129,8 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
     strcpy(novo->lexema, token_atual.lexema);
     strcpy(novo->tipo, tipo);
     strcpy(novo->escopo, escopo);
-    novo->endereco = endereco_global;
-    endereco_global++;
+    novo->endereco = endereco_tabela;
+    endereco_tabela++;
 }
 
 void remove_tabela() {
@@ -260,12 +311,16 @@ void analisa_tipo(fila_tokens *fila, int qtdVar) {
 }
 
 void analisa_leia(fila_tokens *fila) {
+    int cont = 0;
     lexico(fila);
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico(fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
+            cont++; //ta certo isso?
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
+                    gera(-1, "RD", -1, -1);
+                    gera(-1, "STR", cont, -1); //é cont mesmo?
                     lexico(fila);
                     if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
                         lexico(fila);
@@ -292,12 +347,16 @@ void analisa_leia(fila_tokens *fila) {
 }
 
 void analisa_escreva(fila_tokens *fila) {
+    int cont = 0;
     lexico(fila);
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico(fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
+            cont++;
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
+                gera(-1, "LDV", cont, -1); // é cont mesmo?
+                gera(-1, "PRN", -1, -1);
                 lexico(fila);
                 if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
                     lexico(fila);
@@ -353,6 +412,8 @@ void analisa_variaveis(fila_tokens *fila) {
     }
     lexico(fila);
     analisa_tipo(fila, qtdVar);
+    gera(-1, "ALLOC", endereco_mvd, qtdVar); //verificar depois
+    endereco_mvd = endereco_mvd + qtdVar;   //verificar depois
 }
 
 void analisa_et_variaveis(fila_tokens *fila) {
@@ -407,19 +468,19 @@ void analisa_enquanto(fila_tokens *fila) {
     int auxrot1, auxrot2;
 
     auxrot1 = rotulo;
-    gera(rotulo, NULL, "", "");
+    gera(rotulo, "NULL", 0, 0); //acho que null é uma string aqui
     rotulo++;
 
     lexico(fila);
     analisa_expressao(fila);
     if(strcmp(token_atual.simbolo, "sfaca") == 0) {
         auxrot2 = rotulo;
-        gera("", "JMPF", rotulo, "");
+        gera(0, "JMPF", rotulo, 0);
         rotulo++;
         lexico(fila);
         analisa_comando_simples(fila);
-        gera("", "JMP", auxrot1, "");
-        gera(auxrot2, NULL, "", "");
+        gera(0, "JMP", auxrot1, 0);
+        gera(auxrot2, NULL, 0, 0);
     }
     else {
         printf("ERRO analisa_enquanto: esperado <faca>\n");
@@ -433,7 +494,7 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         if(pesquisa_declproc_tabela()) {
             insere_tabela(token_atual.lexema, "procedimento", nivel, rotulo);
-            gera(rotulo, "NULL", "", "");
+            gera(rotulo, "NULL", -1, -1);
             rotulo++;
             lexico(fila);
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
@@ -451,6 +512,7 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
         printf("ERRO analisa_declaracao_procedimento: esperado identificador\n");
     }
     remove_tabela();
+    gera(-1, "RETURN", -1, -1); //acho que é aqui
 }
 
 void analisa_declaracao_funcao(fila_tokens *fila) {
@@ -489,6 +551,7 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
         printf("ERRO analisa_declaracao_funcao: esperado identificador\n");
     }
     remove_tabela();
+    gera(-1, "RETURN", -1, -1); //acho que é aqui RETURNF????
 }
 
 void analisa_subrotinas(fila_tokens *fila) {
@@ -497,7 +560,7 @@ void analisa_subrotinas(fila_tokens *fila) {
 
     if(strcmp(token_atual.simbolo, "sprocedimento") == 0 || strcmp(token_atual.simbolo, "sfuncao") == 0) {
         auxrot = rotulo;
-        gera("", "JMP", rotulo, "");
+        gera(-1, "JMP", rotulo, -1);
         rotulo++;
         flag = 1;
     }
@@ -519,7 +582,7 @@ void analisa_subrotinas(fila_tokens *fila) {
     }
 
     if(flag == 1) {
-        gera(auxrot, "NULL", "", "");
+        gera(auxrot, "NULL", -1, -1);
     }
 }
 
@@ -550,6 +613,7 @@ void analisa_fator(fila_tokens *fila) {
         lexico(fila);
     }
     else if(strcmp(token_atual.simbolo, "snao") == 0) {
+        //unario
         lexico(fila);
         analisa_fator(fila);
     }
@@ -583,6 +647,7 @@ void analisa_termo(fila_tokens *fila) {
 
 void analisa_expressao_simples(fila_tokens *fila) {
     if(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0) {
+        //operadores unarios
         lexico(fila);
     }
     analisa_termo(fila);
@@ -590,7 +655,6 @@ void analisa_expressao_simples(fila_tokens *fila) {
         lexico(fila);
         analisa_termo(fila);
     }
-
 }
 
 void analisa_comandos(fila_tokens *fila) {
@@ -605,6 +669,7 @@ void analisa_comandos(fila_tokens *fila) {
                 }
             }
             else {
+                imprimir_lista_tokens(fila);
                 printf("ERRO analisa_comandos: esperado <;>\n");
                 exit(1);
             }
@@ -650,7 +715,7 @@ int main() {
         exit(1);
     }
 
-    arquivo = fopen("exslide70.txt", "r");
+    arquivo = fopen("teste_mvd.txt", "r");
 
     if(arquivo == NULL) {
         printf("Erro ao abrir o arquivo!\n");
@@ -667,14 +732,15 @@ int main() {
     if(strcmp(token_atual.simbolo, "sprograma") == 0){
         lexico(&fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0){
+            gera(-1, "START", -1, -1);
             insere_tabela(token_atual.lexema, "nomedeprograma", "L", 0);
             lexico(&fila);
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
                 analisa_bloco(&fila);
                 if(strcmp(token_atual.simbolo, "sponto") == 0) {
                     if(lexico(&fila) == 2) {
+                        gera(-1, "HLT", -1, -1);
                         printf(" Sucesso!");
-                        gera("oi", "oi", "oi", "oi");
                     }
                     else {
                         printf("ERRO");

@@ -24,6 +24,7 @@ extern FILE *arquivo;
 extern FILE *arquivo_obj;
 extern int caractere;
 
+
 void enfileira(fila_tokens *fila, token t);
 void imprimir_lista_tokens(fila_tokens *fila);
 void trata_digito(fila_tokens *fila);
