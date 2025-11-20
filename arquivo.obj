@@ -3,6 +3,33 @@
     JMP       1       
 2   NULL               
     ALLOC       3   1   
+    LDV       1       
+    LDV       1       
+    LDC       1       
+    SUB               
+    LDV       1       
+    LDC       7       
+    LDC       5       
+    MULT               
+    LDC       30       
+    LDV       2       
+    ADD               
+    DIVI               
+    ADD               
+    LDV       1       
+    LDV       4       
+    MULT               
+    LDC       2       
+    ADD               
+    CMEQ               
+    LDV       2       
+    LDC       0       
+    CMA               
+    AND               
+    LDC       1       
+    LDV       2       
+    LDV       4       
+    MULT               
     RETURN               
 1   NULL               
     RD               

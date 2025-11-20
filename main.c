@@ -66,7 +66,7 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
 
     simbolo *temp = realloc(tSimb.simbolos, tSimb.tamanho * sizeof(simbolo));
     if(temp == NULL){
-        printf("Erro na alocação de memória\n");
+        printf("Erro na alocaï¿½ï¿½o de memï¿½ria\n");
         free(tSimb.simbolos);
         exit(1);
     }
@@ -99,7 +99,7 @@ void remove_tabela() {
 }
 
 void imprime_tabela() {
-    printf("\n--- Tabela de Símbolos ---\n");
+    printf("\n--- Tabela de Sï¿½mbolos ---\n");
     for (int i = 0; i < tSimb.tamanho; i++) {
         printf("Lexema: %-10s | Tipo: %-10s | Escopo: %s | Endereco: %d\n",
                tSimb.simbolos[i].lexema,
@@ -238,8 +238,58 @@ int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
     return 1;
 }
 
-int precedencia(char* operador){
+int precedenciaGera(char* operador){
 
+    if((strcmp(operador, "sou") == 0)){
+        gera(-1,"OR",-1,-1);
+        return 0;
+    }else if((strcmp(operador, "se") == 0)){
+        gera(-1,"AND",-1,-1);
+        return 1;
+    }else if((strcmp(operador, "snao") == 0)){
+        gera(-1,"NEG",-1,-1);
+        return 2;
+    }else if((strcmp(operador, "sdif") == 0)){
+        gera(-1,"CDIF",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "sig") == 0)){
+        gera(-1,"CEQ",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "smenorig") == 0)){
+        gera(-1,"CMEQ",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "smenor") == 0)){
+        gera(-1,"CME",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "smaiorig") == 0)){
+        gera(-1,"CMAQ",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "smaior") == 0)){
+        gera(-1,"CMA",-1,-1);
+        return 4;
+    }else if((strcmp(operador, "smais") == 0)){
+        gera(-1,"ADD",-1,-1);
+        return 5;
+    }else if((strcmp(operador, "smenos") == 0)){
+        gera(-1,"SUB",-1,-1);
+        return 5;
+    }else if((strcmp(operador, "sdiv") == 0)){
+        gera(-1,"DIVI",-1,-1);
+        return 6;
+    }else if((strcmp(operador, "smult") == 0)){
+        gera(-1,"MULT",-1,-1);
+        return 6;
+    }else if((strcmp(operador, "#") == 0)){
+        gera(-1,"INV",-1,-1);
+        return 7;
+    }else if((strcmp(operador, "@") == 0)){
+        return 7;
+    }
+
+    return 8;
+}
+
+int precedencia(char* operador){
     if((strcmp(operador, "sou") == 0)){
         return 0;
     }else if((strcmp(operador, "se") == 0)){
@@ -256,11 +306,15 @@ int precedencia(char* operador){
         return 4;
     }else if((strcmp(operador, "smaior") == 0)){
         return 4;
-    }else if((strcmp(operador, "smais") == 0)){
+    }else if((strcmp(operador, "sig") == 0)){
+        return 4;
+    }
+    else if((strcmp(operador, "smais") == 0)){
         return 5;
     }else if((strcmp(operador, "smenos") == 0)){
         return 5;
-    }else if((strcmp(operador, "sdiv") == 0)){
+    }
+    else if((strcmp(operador, "sdiv") == 0)){
         return 6;
     }else if((strcmp(operador, "smult") == 0)){
         return 6;
@@ -272,8 +326,6 @@ int precedencia(char* operador){
 
     return 8;
 }
-
-
 int verificaPrecedencia(char* operador1, char* operador2){
 
     if(precedencia(operador1) <= precedencia(operador2)){
@@ -282,7 +334,6 @@ int verificaPrecedencia(char* operador1, char* operador2){
 
 	return 0;
 }
-
 
 void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
     NoOperador*aux = pilhapos->topo;
@@ -293,7 +344,6 @@ void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
 	push(pilhapos,token_atual);
 
 }
-
 
 ListaOperadores analisa_expressao(fila_tokens *fila) {
     Pilha * pilhapos = criaPilha();
@@ -319,10 +369,8 @@ ListaOperadores analisa_expressao(fila_tokens *fila) {
     }
 
     free(pilhapos);
-    printf("\n Acabou a expressao posfixe \n");
     return lista;
 }
-
 
 void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT,char* lexema){
     int index;
@@ -333,20 +381,27 @@ void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT,char* lexema){
     }
 
     if(strcmp(tSimb.simbolos[index].tipo,"nomedeprograma") == 0 || strcmp(tSimb.simbolos[index].tipo,"procedimento") == 0){
-        printf("ERRO: esperado variavel ou funcao na expressao");
-        printf("Variavel ploblematicao: %s,%s",tSimb.simbolos[index].tipo,tSimb.simbolos[index].lexema);
+        printf("ERRO: %s nao eh variavel/funcao", lexema);
         exit(1);
     }
-    if(strcmp(tSimb.simbolos[index].tipo, "funcao_inteiro") || strcmp(tSimb.simbolos[index].tipo,"inteiro")){
+    if(strcmp(tSimb.simbolos[index].tipo, "funcao_inteiro") == 0) {
         pushTipo(pilhaT,"inteiro");
-
-    }else{
+        gera(-1,"CALL",tSimb.simbolos[index].endereco,-1);
+        gera(-1,"LDV",0,-1);
+    }else if(strcmp(tSimb.simbolos[index].tipo,"inteiro") == 0){
+        pushTipo(pilhaT,"inteiro");
+        gera(-1,"LDV",tSimb.simbolos[index].endereco,-1);
+    }else if(strcmp(tSimb.simbolos[index].tipo,"funcao_booleano") == 0){
         pushTipo(pilhaT,"booleano");
+        gera(-1,"CALL",tSimb.simbolos[index].endereco,-1);
+        gera(-1,"LDV",0,-1);
+    }
+    else{
+        pushTipo(pilhaT,"booleano");
+        gera(-1,"LDV",tSimb.simbolos[index].endereco,-1);
     }
 
 }
-
-
 
 char* analisa_tipo_expressao(ListaOperadores lista){
     PilhaTipo* pilhaT = criaPilhaTipo();
@@ -354,13 +409,13 @@ char* analisa_tipo_expressao(ListaOperadores lista){
     int j;
     int precedenciaOperador;
     for(int i = 0; i< lista.tamanho;i++){
-        precedenciaOperador = precedencia(lista.operadores[i].simbolo);
+        precedenciaOperador = precedenciaGera(lista.operadores[i].simbolo);
         if(strcmp(lista.operadores[i].simbolo, "sidentificador") == 0){
             verifica_tipo_variavel_funcao(pilhaT, lista.operadores[i].lexema);
         }else if(strcasecmp(lista.operadores[i].simbolo,"snumero") == 0){
             pushTipo(pilhaT,"inteiro");
+            gera(-1,"LDC",atoi(lista.operadores[i].lexema),-1);
         }else if(precedenciaOperador >= 4 && precedenciaOperador < 7 ){
-            printf("\nVAMBORA\n");
             for(j = 0; j< 2; j++){
                 tipo = popTipo(pilhaT);
                 if(strcmp(tipo,"inteiro") != 0){
@@ -369,15 +424,12 @@ char* analisa_tipo_expressao(ListaOperadores lista){
                 }
             }
                 if(precedenciaOperador == 4){
-                    printf("\nColocou booleano!!\n");
                     pushTipo(pilhaT,"booleano");
                 }else{
                     pushTipo(pilhaT,"inteiro");
                 }
-
         }
         else if(precedenciaOperador < 2){
-            tipo = popTipo(pilhaT);
             for(j = 0; j< 2; j++){
                 tipo = popTipo(pilhaT);
                 if(strcmp(tipo,"booleano") != 0){
@@ -407,8 +459,6 @@ char* analisa_tipo_expressao(ListaOperadores lista){
 
     return popTipo(pilhaT);
 }
-
-
 
 void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
     ListaOperadores lista;
@@ -492,7 +542,7 @@ void analisa_escreva(fila_tokens *fila) {
             cont++;
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
-                gera(-1, "LDV", cont, -1); // é cont mesmo?
+                gera(-1, "LDV", cont, -1); // ï¿½ cont mesmo?
                 gera(-1, "PRN", -1, -1);
                 lexico(fila);
                 if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
@@ -597,7 +647,14 @@ void analisa_atrib_chprocedimento(fila_tokens *fila) {
 
 void analisa_se(fila_tokens *fila) {
     lexico(fila);
-    analisa_expressao(fila);
+    ListaOperadores lista;
+    char* tipoExpressao;
+    lista = analisa_expressao(fila);
+    tipoExpressao = analisa_tipo_expressao(lista);
+    printf("\nO tipo final eh %s\n",tipoExpressao );
+    if(strcmp("booleano", tipoExpressao) != 0){
+        printf("ERRO: Expressao tipo inteiro dentro de enquanto");
+    }
     if(strcmp(token_atual.simbolo, "sentao") == 0) {
         lexico(fila);
         analisa_comando_simples(fila);
@@ -616,11 +673,20 @@ void analisa_enquanto(fila_tokens *fila) {
     int auxrot1, auxrot2;
 
     auxrot1 = rotulo;
-    gera(rotulo, "NULL", -1, -1); //acho que null é uma string aqui
+    gera(rotulo, "NULL", -1, -1); //acho que null ï¿½ uma string aqui
     rotulo++;
 
     lexico(fila);
-    analisa_expressao(fila);
+    ListaOperadores lista;
+    char* tipoExpressao;
+    lista = analisa_expressao(fila);
+    tipoExpressao = analisa_tipo_expressao(lista);
+    printf("\nO tipo final eh %s\n",tipoExpressao );
+    if(strcmp("booleano", tipoExpressao) != 0){
+        printf("ERRO: Expressao tipo inteiro dentro de enquanto");
+    }
+
+
     if(strcmp(token_atual.simbolo, "sfaca") == 0) {
         auxrot2 = rotulo;
         gera(-1, "JMPF", rotulo, -1);
@@ -664,7 +730,7 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
         exit(1);
     }
     remove_tabela();
-    gera(-1, "RETURN", -1, -1); //acho que é aqui
+    gera(-1, "RETURN", -1, -1); //acho que ï¿½ aqui
 }
 
 void analisa_declaracao_funcao(fila_tokens *fila) {
@@ -706,7 +772,7 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
         exit(1);
     }
     remove_tabela();
-    gera(-1, "RETURN", -1, -1); //acho que é aqui RETURNF????
+    gera(-1, "RETURN", -1, -1); //acho que ï¿½ aqui RETURNF????
 }
 
 void analisa_subrotinas(fila_tokens *fila) {
