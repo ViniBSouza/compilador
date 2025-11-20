@@ -504,7 +504,7 @@ void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
             printf("ERRO: Expressao do tipo %s e funcao do tipo %s",tipoExpressao,tSimb.simbolos[index].tipo);
             exit(1);
         }
-        gera(-1,"STORE",0,-1);
+        gera(-1,"STR",0,-1);
         gera(-1,"DALLOC",indexUltimaVariavel,numVariavel);
         gera(-1,"RETURNF",-1,-1);
 
@@ -521,7 +521,7 @@ void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
             exit(1);
         }
 
-        gera(-1,"STORE",tSimb.simbolos[1].endereco,-1);
+        gera(-1,"STR",tSimb.simbolos[index].endereco,-1);
 
     }
 }
@@ -711,7 +711,7 @@ void analisa_se(fila_tokens *fila) {
         lexico(fila);
         analisa_comando_simples(fila);
         gera(-1,"JMP",rotulo,-1);
-        gera(-1,"NULL",auxrot,-1);
+        gera(auxrot,"NULL",-1,-1);
         auxrot2 = rotulo;
         rotulo++;
         if(strcmp(token_atual.simbolo, "ssenao") == 0) {
@@ -723,7 +723,7 @@ void analisa_se(fila_tokens *fila) {
         printf("ERRO analisa_se: esperado <entao>\n");
         exit(1);
     }
-    gera(-1,"NULL",auxrot2,-1);
+    gera(auxrot2,"NULL",-1,-1);
 
 }
 

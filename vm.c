@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <ctype.h>
 
 struct no
 {
@@ -356,8 +356,8 @@ void executarJMP(char* rotulo){
 }
 
 void executarJMPF(char* rotulo){
-
-    if(mDados->topo->data == 0){
+    int dado = pop(mDados);
+    if(dado == 0){
         NoRotulo*rotuloEncontrado = buscaListRot(listaRotulos,rotulo);
         programCounter = rotuloEncontrado->pos;
         NoInstrucao*instrucaoPulo = buscaListIndex(listaIntrucoes,programCounter);
@@ -374,6 +374,8 @@ void executarCALL(char* rotulo){
 
 void executarRETURN(){
      int conteudo = pop(mDados);
+     printf("\n Vou pular para %d\n", conteudo);
+
      programCounter = conteudo;
      NoInstrucao*instrucaoPulo = buscaListIndex(listaIntrucoes,programCounter);
      instrucaoAtual = instrucaoPulo;
@@ -396,7 +398,7 @@ void executar(char *inst, char *rotulo, char* arg1, char* arg2) {
         executarALLOC(atoi(arg1),atoi(arg2));
     }else if(strcmp(inst,"LDV") == 0){
         executarLDV(atoi(arg1));
-    }else if(strcmp(inst,"STORE") == 0){
+    }else if(strcmp(inst,"STR") == 0){
         executarSTORE(atoi(arg1));
     }else if(strcmp(inst,"DALLOC") == 0){
         executarDALLOC(atoi(arg1),atoi(arg2));
@@ -446,77 +448,66 @@ void executar(char *inst, char *rotulo, char* arg1, char* arg2) {
 
 //
 }
+void trim(char *s) {
+    // remove spaces leading and trailing
+    int i = 0, j = strlen(s) - 1;
 
+    // remove espaços no início
+    while (isspace((unsigned char)s[i])) i++;
+
+    // remove espaços no fim
+    while (j >= i && isspace((unsigned char)s[j])) j--;
+
+    // desloca
+    memmove(s, s + i, j - i + 1);
+    s[j - i + 1] = '\0';
+}
 
 int main(int argc, char *argv[]) {
 
     mDados = criaPilha();
-
+    /*
     if (argc < 2) {
         printf("Uso: %s caminho_do_arquivo.obj\n", argv[0]);
         return 1;
     }
 
     char *caminho = argv[1];
+    */
 
+    char *caminho = "arquivo.obj";
     FILE *file = fopen(caminho, "r");
     if (!file) {
         perror("Erro ao abrir arquivo .obj");
         return 1;
     }
 
-   
-
 
     char line[34];
     int linha = 0;
     while (fgets(line, sizeof(line), file)) {
 
-        line[strcspn(line, "\n")] = 0;
+        line[strcspn(line, "\n")] = 0;  // remove \n
+
         char rotulo[8]  = "";
         char comando[9] = "";
         char arg1[8]    = "";
         char arg2[8]    = "";
-        char t1[50], t2[50], t3[50], t4[50];
-        char prefixo[5];
-        strncpy(prefixo, line, 4);
-        prefixo[4] = '\0';
 
-        int temRotulo = 0;
-        for (int i = 0; i < 4; i++) {
-            if (prefixo[i] != ' ' && prefixo[i] != '\t') {
-                temRotulo = 1;
-                break;
-            }
-        }
-        if (temRotulo) {
-            int n = sscanf(line, "%7s %49s %49s %49s", rotulo, t1, t2, t3);
+        // --- COPIAR PELO TAMANHO FIXO DE CADA CAMPO ---
+        strncpy(rotulo,  line + 0,  4); rotulo[4]  = '\0';
+        strncpy(comando, line + 4,  8); comando[8] = '\0';
+        strncpy(arg1,    line + 12, 4); arg1[4]    = '\0';
+        strncpy(arg2,    line + 16, 4); arg2[4]    = '\0';
 
-            if (n >= 2) strcpy(comando, t1);
-            if (n >= 3) strcpy(arg1, t2);
-            if (n >= 4) strcpy(arg2, t3);
-        }
-        else {
-            int n = sscanf(line, "%49s %49s %49s %49s", t1, t2, t3, t4);
+        // --- REMOVER ESPAÇOS EXTRAS ---
+        trim(rotulo);
+        trim(comando);
+        trim(arg1);
+        trim(arg2);
 
-            if (n >= 1) strcpy(comando, t1);
-            if (n >= 2) strcpy(arg1, t2);
-            if (n >= 3) strcpy(arg2, t3);
-        }
-
-        if (strchr(arg1, ',')) {
-            char *p = strchr(arg1, ',');
-            *p = '\0';
-            strcpy(arg2, p + 1);
-        }
-
-        if (strchr(arg2, ',')) {
-            char *p = strchr(arg2, ',');
-            *p = '\0';
-        }
-
-
-        if (strcmp(rotulo, "") != 0) {
+        // --- SE ROTULO NÃO ESTIVER VAZIO, É RÓTULO ---
+        if (strlen(rotulo) > 0) {
             listaRotulos = listaRotuloAppend(listaRotulos, rotulo, linha);
         }
 
@@ -524,6 +515,9 @@ int main(int argc, char *argv[]) {
                rotulo, comando, arg1, arg2);
 
         listaIntrucoes = listaAppend(listaIntrucoes, rotulo, comando, arg1, arg2);
+
+
+
 
         linha++;
     }
@@ -537,6 +531,15 @@ int main(int argc, char *argv[]) {
                      instrucaoAtual->arg1,instrucaoAtual->arg2);
             instrucaoAtual = instrucaoAtual->prox;
             programCounter++;
+
+                    No *aux5;
+        aux5 = mDados->topo;
+        printf("Pilha: \n");
+        while(aux5 != NULL){
+            printf("\n %d", aux5->data);
+            aux5 = aux5->prox;
+        }
+
         }
     }
 
