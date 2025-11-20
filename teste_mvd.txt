@@ -4,7 +4,7 @@ programa exemplo6;
  var z: inteiro;
  inicio
  z:= x; x:=x-1;
-se z>1 entao p
+se (x + 7 * 5 div (30+y) <= (x*z+2))e(y>0) entao p
  senao y:=1;
  y:=y*z
  fim { p };

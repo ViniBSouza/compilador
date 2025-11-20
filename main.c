@@ -24,9 +24,9 @@ int rotulo = 0;
 
 void analisa_comandos(fila_tokens *fila);
 void analisa_comando_simples(fila_tokens *fila);
-void analisa_expressao_simples(fila_tokens *fila);
-void analisa_termo(fila_tokens *fila);
-void analisa_fator(fila_tokens *fila);
+void analisa_expressao_simples(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
+void analisa_termo(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
+void analisa_fator(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
 void analisa_declaracao_procedimento(fila_tokens *fila);
 void analisa_subrotinas(fila_tokens *fila);
 void analisa_bloco(fila_tokens *fila);
@@ -69,12 +69,16 @@ int precedencia(char *operador) {
 }
 */
 
+
+/*
 int verifica_procedencia(char *operador1, char *operador2) {
     if(precedencia(operador1) > precedencia(operador2)) {
         return 1;
     }
     return 0;
 }
+
+*/
 /*
 void analisa_operador(char *operador) {
 
@@ -118,7 +122,7 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
 
     simbolo *temp = realloc(tSimb.simbolos, tSimb.tamanho * sizeof(simbolo));
     if(temp == NULL){
-        printf("Erro na alocaÃ§Ã£o de memÃ³ria\n");
+        printf("Erro na alocação de memória\n");
         free(tSimb.simbolos);
         exit(1);
     }
@@ -151,7 +155,7 @@ void remove_tabela() {
 }
 
 void imprime_tabela() {
-    printf("\n--- Tabela de SÃ­mbolos ---\n");
+    printf("\n--- Tabela de Símbolos ---\n");
     for (int i = 0; i < tSimb.tamanho; i++) {
         printf("Lexema: %-10s | Tipo: %-10s | Escopo: %s | Endereco: %d\n",
                tSimb.simbolos[i].lexema,
@@ -229,7 +233,7 @@ int pesquisa_declproc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
-            printf("%s", tSimb.simbolos[i].lexema);
+            //printf("%s", tSimb.simbolos[i].lexema);
             return 0;
         }
     }
@@ -252,7 +256,7 @@ int pesquisa_declfunc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
-            printf("%s", tSimb.simbolos[i].lexema);
+            //printf("%s", tSimb.simbolos[i].lexema);
             return 0;
         }
     }
@@ -273,7 +277,7 @@ int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(ident_proc, tSimb.simbolos[i].lexema) == 0) {
             if(strcmp(tSimb.simbolos[i].tipo, "procedimento") == 0) {
-                printf("%s", tSimb.simbolos[i].lexema);
+                //printf("%s", tSimb.simbolos[i].lexema);
                 return 0; //verdadeiro: proc existe
             }
             else {
@@ -285,14 +289,91 @@ int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
     return 1;
 }
 
-void analisa_expressao(fila_tokens *fila) {
-    analisa_expressao_simples(fila);
+
+
+int precedencia(char* operador){
+
+    if((strcmp(operador, "sou") == 0)){
+        return 0;
+    }else if((strcmp(operador, "se") == 0)){
+        return 1;
+    }else if((strcmp(operador, "snao") == 0)){
+        return 2;
+    }else if((strcmp(operador, "sdif") == 0)){
+        return 4;
+    }else if((strcmp(operador, "smenorig") == 0)){
+        return 4;
+    }else if((strcmp(operador, "smenor") == 0)){
+        return 4;
+    }else if((strcmp(operador, "smaiorig") == 0)){
+        return 4;
+    }else if((strcmp(operador, "smaior") == 0)){
+        return 4;
+    }else if((strcmp(operador, "smais") == 0)){
+        return 5;
+    }else if((strcmp(operador, "smenos") == 0)){
+        return 5;
+    }else if((strcmp(operador, "sdiv") == 0)){
+        return 6;
+    }else if((strcmp(operador, "smult") == 0)){
+        return 6;
+    }else if((strcmp(operador, "#") == 0)){
+        return 7;
+    }else if((strcmp(operador, "@") == 0)){
+        return 7;
+    }
+
+    return -1;
+}
+
+
+int verificaPrecedencia(char* operador1, char* operador2){
+
+    if(precedencia(operador1) <= precedencia(operador2)){
+        return 1;
+    }
+
+	return 0;
+}
+
+
+void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
+    NoOperador*aux = pilhapos->topo;
+	while(pilhapos->topo != NULL && strcmp(aux->t.simbolo, "sabre_parenteses") != 0 && verificaPrecedencia(token_atual.simbolo, aux->t.simbolo)){
+		insere_lista(pop(pilhapos),lista);
+		aux = pilhapos->topo;
+	}
+	push(pilhapos,token_atual);
+
+}
+
+
+ListaOperadores analisa_expressao(fila_tokens *fila) {
+    Pilha * pilhapos = criaPilha();
+    ListaOperadores lista;
+    lista.operadores = NULL;
+    lista.tamanho = 0;
+    analisa_expressao_simples(fila,&lista,pilhapos);
     if(strcmp(token_atual.simbolo, "smaior") == 0 || strcmp(token_atual.simbolo, "smaiorig") == 0 ||
        strcmp(token_atual.simbolo, "sig") == 0 || strcmp(token_atual.simbolo, "smenor") == 0 ||
        strcmp(token_atual.simbolo, "smenorig") == 0 || strcmp(token_atual.simbolo, "sdif") == 0) {
+        trataOperadorPos(&lista,pilhapos);
         lexico(fila);
-        analisa_expressao_simples(fila);
+        analisa_expressao_simples(fila,&lista,pilhapos);
     }
+
+    while(pilhapos->topo != NULL){
+        insere_lista(pop(pilhapos),&lista);
+    }
+
+    printf("OLHA SO A MINHA EXPRESSAO POSFIXE EBAAAA: \n");
+    for(int i = 0; i< lista.tamanho;i++){
+        printf("%s",lista.operadores[i].lexema);
+    }
+
+    free(pilhapos);
+    printf("\n Acabou a expressao posfixe \n");
+    return lista;
 }
 
 void analisa_atribuicao(fila_tokens *fila) {
@@ -311,16 +392,16 @@ void analisa_tipo(fila_tokens *fila, int qtdVar) {
 }
 
 void analisa_leia(fila_tokens *fila) {
-    int cont = 0;
+
     lexico(fila);
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico(fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
-            cont++; //ta certo isso?
+
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
                     gera(-1, "RD", -1, -1);
-                    gera(-1, "STR", cont, -1); //Ã© cont mesmo?
+                    gera(-1, "STR", tSimb.simbolos[index].endereco, -1);
                     lexico(fila);
                     if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
                         lexico(fila);
@@ -355,7 +436,7 @@ void analisa_escreva(fila_tokens *fila) {
             cont++;
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
-                gera(-1, "LDV", cont, -1); // Ã© cont mesmo?
+                gera(-1, "LDV", cont, -1); // é cont mesmo?
                 gera(-1, "PRN", -1, -1);
                 lexico(fila);
                 if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
@@ -468,7 +549,7 @@ void analisa_enquanto(fila_tokens *fila) {
     int auxrot1, auxrot2;
 
     auxrot1 = rotulo;
-    gera(rotulo, "NULL", 0, 0); //acho que null Ã© uma string aqui
+    gera(rotulo, "NULL", 0, 0); //acho que null é uma string aqui
     rotulo++;
 
     lexico(fila);
@@ -512,7 +593,7 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
         printf("ERRO analisa_declaracao_procedimento: esperado identificador\n");
     }
     remove_tabela();
-    gera(-1, "RETURN", -1, -1); //acho que Ã© aqui
+    gera(-1, "RETURN", -1, -1); //acho que é aqui
 }
 
 void analisa_declaracao_funcao(fila_tokens *fila) {
@@ -551,7 +632,7 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
         printf("ERRO analisa_declaracao_funcao: esperado identificador\n");
     }
     remove_tabela();
-    gera(-1, "RETURN", -1, -1); //acho que Ã© aqui RETURNF????
+    gera(-1, "RETURN", -1, -1); //acho que é aqui RETURNF????
 }
 
 void analisa_subrotinas(fila_tokens *fila) {
@@ -593,10 +674,11 @@ void analisa_bloco(fila_tokens *fila) {
     analisa_comandos(fila);
 }
 
-void analisa_fator(fila_tokens *fila) {
+void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
     int ind;
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         printf("%s\n", token_atual.lexema);
+        insere_lista(token_atual,lista);
         if(pesquisa_tabela(token_atual.lexema, &ind)) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
                     analisa_chamada_funcao(fila);
@@ -610,17 +692,22 @@ void analisa_fator(fila_tokens *fila) {
         }
     }
     else if(strcmp(token_atual.simbolo, "snumero") == 0) {
+        insere_lista(token_atual,lista);
         lexico(fila);
     }
     else if(strcmp(token_atual.simbolo, "snao") == 0) {
         //unario
+        trataOperadorPos(lista,pilhapos);
         lexico(fila);
-        analisa_fator(fila);
+        analisa_fator(fila,lista,pilhapos);
     }
     else if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico(fila);
-        analisa_expressao(fila);
+        ListaOperadores expressaoParenteses = analisa_expressao(fila);
         if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
+            for(int i = 0; i<expressaoParenteses.tamanho;i++){
+                insere_lista(expressaoParenteses.operadores[i], lista);
+            }
             lexico(fila);
         }
         else {
@@ -628,6 +715,7 @@ void analisa_fator(fila_tokens *fila) {
         }
     }
     else if(strcmp(token_atual.lexema, "verdadeiro") == 0 || strcmp(token_atual.lexema, "falso") == 0) {
+        insere_lista(token_atual,lista);
         lexico(fila);
     }
     else {
@@ -637,23 +725,30 @@ void analisa_fator(fila_tokens *fila) {
     }
 }
 
-void analisa_termo(fila_tokens *fila) {
-    analisa_fator(fila);
+void analisa_termo(fila_tokens *fila,ListaOperadores *lista,Pilha* pilhapos) {
+    analisa_fator(fila, lista,pilhapos);
     while(strcmp(token_atual.simbolo, "smult") == 0 || strcmp(token_atual.simbolo, "sdiv") == 0 || strcmp(token_atual.simbolo, "se") == 0) {
+        trataOperadorPos(lista,pilhapos);
         lexico(fila);
-        analisa_fator(fila);
+        analisa_fator(fila,lista,pilhapos);
     }
 }
 
-void analisa_expressao_simples(fila_tokens *fila) {
+void analisa_expressao_simples(fila_tokens *fila,ListaOperadores* lista, Pilha* pilhapos) {
     if(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0) {
         //operadores unarios
+        strcpy(token_atual.simbolo,"@");
+        if(strcmp(token_atual.simbolo, "smenos") == 0){
+            strcpy(token_atual.simbolo,"#");
+        }
+        trataOperadorPos(lista,pilhapos);
         lexico(fila);
     }
-    analisa_termo(fila);
+    analisa_termo(fila,lista,pilhapos);
     while(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0 || strcmp(token_atual.simbolo, "sou") == 0) {
+        trataOperadorPos(lista,pilhapos);
         lexico(fila);
-        analisa_termo(fila);
+        analisa_termo(fila,lista,pilhapos);
     }
 }
 

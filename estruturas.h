@@ -2,9 +2,13 @@
 #define ESTRUTURAS_H
 
 #include <stdio.h>
+#include "lexico.h"
+
+
+
 
 typedef struct noOperador {
-    char operador[10];
+    token t;
     struct noOperador* prox;
 } NoOperador;
 
@@ -12,8 +16,11 @@ typedef struct pilha {
     NoOperador* topo;
 } Pilha;
 
+
+
 Pilha* criaPilha();
-void push(Pilha* p, const char* op);
-char* pop(Pilha* p);
+void push(Pilha* p, token t);
+token pop(Pilha* p);
+
 
 #endif

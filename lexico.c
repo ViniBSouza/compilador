@@ -4,10 +4,39 @@
 #include <ctype.h>
 #include "lexico.h"
 
+
+
 token token_atual;
 FILE *arquivo = NULL;
 FILE *arquivo_obj = NULL;
 int caractere;
+
+
+
+
+void insere_lista(token novoToken, ListaOperadores* lista) {
+
+    // Aumenta o tamanho
+    lista->tamanho++;
+
+    // Realoca vetor de tokens
+    token* temp = realloc(lista->operadores, lista->tamanho * sizeof(token));
+    if (temp == NULL) {
+        printf("Erro na realocação de memória\n");
+        free(lista->operadores);
+        exit(1);
+    }
+
+    lista->operadores = temp;
+
+    // Copia o token para a posição correta
+    lista->operadores[lista->tamanho - 1] = novoToken;
+}
+
+
+
+
+
 
 void enfileira(fila_tokens *fila, token t) {
     no *novo = malloc(sizeof(no));

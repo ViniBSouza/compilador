@@ -448,17 +448,24 @@ void executar(char *inst, char *rotulo, char* arg1, char* arg2) {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
 
     mDados = criaPilha();
 
-
-
-    FILE *file = fopen("vm.obj", "r");
-    if (!file) {
-        perror("Erro ao abrir programa.obj");
+    if (argc < 2) {
+        printf("Uso: %s caminho_do_arquivo.obj\n", argv[0]);
         return 1;
     }
+
+    char *caminho = argv[1];
+
+    FILE *file = fopen(caminho, "r");
+    if (!file) {
+        perror("Erro ao abrir arquivo .obj");
+        return 1;
+    }
+
+   
 
 
     char line[34];

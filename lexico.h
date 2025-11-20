@@ -13,10 +13,16 @@ typedef struct no {
     struct no *prox;
 } no;
 
+
 typedef struct {
     no *frente;
     no *tras;
 } fila_tokens;
+
+typedef struct {
+    token* operadores;
+    int tamanho;
+} ListaOperadores;
 
 
 extern token token_atual;
@@ -35,5 +41,7 @@ void trata_operador_relacional(fila_tokens *fila);
 void trata_pontuacao(fila_tokens *fila);
 void pega_token(fila_tokens *fila);
 int lexico(fila_tokens *fila);
+void insere_lista(token novoToken, ListaOperadores* lista);
+
 
 #endif
