@@ -534,15 +534,14 @@ void analisa_leia(fila_tokens *fila) {
 }
 
 void analisa_escreva(fila_tokens *fila) {
-    int cont = 0;
+
     lexico(fila);
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico(fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
-            cont++;
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
-                gera(-1, "LDV", cont, -1); // é cont mesmo?
+                gera(-1, "LDV", tSimb.simbolos[index].endereco, -1);
                 gera(-1, "PRN", -1, -1);
                 lexico(fila);
                 if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
@@ -950,6 +949,7 @@ int main() {
         lexico(&fila);
         if(strcmp(token_atual.simbolo, "sidentificador") == 0){
             gera(-1, "START", -1, -1);
+            gera(-1,"ALLOC",0,1);
             insere_tabela(token_atual.lexema, "nomedeprograma", "L", 0);
             lexico(&fila);
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {

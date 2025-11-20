@@ -1,4 +1,5 @@
     START               
+    ALLOC       0   1   
     ALLOC       1   2   
     JMP       1       
 2   NULL               
@@ -28,13 +29,13 @@
     AND               
     LDC       1       
     LDV       2       
-    LDV       4       
+    LDV         4     
     MULT               
     RETURN               
 1   NULL               
     RD               
     STR       1       
-    LDV       1       
+    LDV       2       
     PRN               
     LDV       1       
     PRN               
