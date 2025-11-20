@@ -1,5 +1,5 @@
 programa exemplo6;
- var x, y: inteiro;
+ var x,y: inteiro;
  procedimento p;
  var z: inteiro;
  inicio

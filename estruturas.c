@@ -43,3 +43,50 @@ token pop(Pilha* p) {
     return t;
 }
 
+
+
+PilhaTipo* criaPilhaTipo() {
+    PilhaTipo* p = (PilhaTipo*) malloc(sizeof(PilhaTipo));
+    if (!p) {
+        printf("Erro de alocação!\n");
+        exit(1);
+    }
+
+    p->topo = NULL;
+    return p;
+}
+
+
+void pushTipo(PilhaTipo* p, const char* tipo) {
+    NoTipo* novo = (NoTipo*) malloc(sizeof(NoTipo));
+    if (!novo) {
+        printf("Erro de alocação!\n");
+        exit(1);
+    }
+
+    strcpy(novo->tipo, tipo);
+    novo->prox = p->topo;
+    p->topo = novo;
+}
+
+
+char* popTipo(PilhaTipo* p) {
+    if (p->topo == NULL) {
+        printf("Pilha de tipos vazia!\n");
+        return NULL;
+    }
+
+    NoTipo* tmp = p->topo;
+
+    // copia string
+    char* tipo = strdup(tmp->tipo);
+
+    // atualiza topo
+    p->topo = tmp->prox;
+
+    free(tmp);
+
+    return tipo;
+}
+
+

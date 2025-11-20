@@ -17,10 +17,23 @@ typedef struct pilha {
 } Pilha;
 
 
+typedef struct noTipo {
+   char tipo[50];
+   struct noTipo* prox;
+} NoTipo;
+
+
+typedef struct {
+    NoTipo* topo;
+} PilhaTipo;
+
 
 Pilha* criaPilha();
 void push(Pilha* p, token t);
 token pop(Pilha* p);
+PilhaTipo* criaPilhaTipo();
+void pushTipo(PilhaTipo* p, const char* tipo);
+char* popTipo(PilhaTipo* p);
 
 
 #endif

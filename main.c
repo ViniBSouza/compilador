@@ -218,7 +218,7 @@ void coloca_tipo_tabela(const char *lexema, int qtdVar) {
 
 int pesquisa_declvar_tabela(const char *lexema) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
-        if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
+        if(strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
             if(strcmp(tSimb.simbolos[i].tipo, "inteiro") || strcmp(tSimb.simbolos[i].tipo, "booleano")){
                 return i;
             }
@@ -243,7 +243,7 @@ int pesquisa_declproc_tabela() {
 
 int pesquisa_tabela(const char *lexema, int *ind) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
-        if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
+        if(strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
             *ind = i;
             return 1;
         }
@@ -323,7 +323,7 @@ int precedencia(char* operador){
         return 7;
     }
 
-    return -1;
+    return 8;
 }
 
 
@@ -376,9 +376,111 @@ ListaOperadores analisa_expressao(fila_tokens *fila) {
     return lista;
 }
 
-void analisa_atribuicao(fila_tokens *fila) {
+
+void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT,char* lexema){
+    int index;
+    pesquisa_tabela(lexema,&index);
+    if(index == 0){
+        printf("ERRO: variavel/funcao nao declarada");
+        exit(1);
+    }
+
+    if(strcmp(tSimb.simbolos[index].tipo,"nomedeprograma") == 0 || strcmp(tSimb.simbolos[index].tipo,"procedimento") == 0){
+        printf("ERRO: esperado variavel ou funcao na expressao");
+        printf("Variavel ploblematicao: %s,%s",tSimb.simbolos[index].tipo,tSimb.simbolos[index].lexema);
+        exit(1);
+    }
+    if(strcmp(tSimb.simbolos[index].tipo, "funcao_inteiro") || strcmp(tSimb.simbolos[index].tipo,"inteiro")){
+        pushTipo(pilhaT,"inteiro");
+
+    }else{
+        pushTipo(pilhaT,"booleano");
+    }
+
+}
+
+
+
+char* analisa_tipo_expressao(ListaOperadores lista){
+    PilhaTipo* pilhaT = criaPilhaTipo();
+    char* tipo;
+    int j;
+    int precedenciaOperador;
+    for(int i = 0; i< lista.tamanho;i++){
+        precedenciaOperador = precedencia(lista.operadores[i].simbolo);
+        if(strcmp(lista.operadores[i].simbolo, "sidentificador") == 0){
+            verifica_tipo_variavel_funcao(pilhaT, lista.operadores[i].lexema);
+        }else if(strcasecmp(lista.operadores[i].simbolo,"snumero") == 0){
+            pushTipo(pilhaT,"inteiro");
+        }else if(precedenciaOperador >= 4 && precedenciaOperador < 7 ){
+            printf("\nVAMBORA\n");
+            for(j = 0; j< 2; j++){
+                tipo = popTipo(pilhaT);
+                if(strcmp(tipo,"inteiro") != 0){
+                    printf("ERRO: esperado dois inteiros na expressao para o sinal %s ",lista.operadores[i].lexema);
+                    exit(1);
+                }
+            }
+                if(precedenciaOperador == 4){
+                    printf("\nColocou booleano!!\n");
+                    pushTipo(pilhaT,"booleano");
+                }else{
+                    pushTipo(pilhaT,"inteiro");
+                }
+
+        }
+        else if(precedenciaOperador < 2){
+            tipo = popTipo(pilhaT);
+            for(j = 0; j< 2; j++){
+                tipo = popTipo(pilhaT);
+                if(strcmp(tipo,"booleano") != 0){
+                    printf("ERRO: esperado dois booleanos na expressao para o sinal %s ",lista.operadores[i].lexema);
+                    exit(1);
+                }
+            }
+            pushTipo(pilhaT,"booleano");
+        }else if(precedenciaOperador == 7){
+            tipo = popTipo(pilhaT);
+            if(strcmp(tipo,"intero") != 0 ){
+                printf("ERRO: esperado um inteiro na expressao para o sinal unario %s ",lista.operadores[i].lexema);
+                exit(1);
+            }
+            pushTipo(pilhaT,"inteiro");
+        }else if (precedenciaOperador == 2){
+            tipo = popTipo(pilhaT);
+            if(strcmp(tipo,"inteiro") == 0 ){
+                printf("ERRO: esperado um booleano na expressao para o sinal unario %s ",lista.operadores[i].lexema);
+                exit(1);
+            }
+            pushTipo(pilhaT,"booleano");
+
+        }
+
+    }
+
+    return popTipo(pilhaT);
+}
+
+
+
+void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
+    ListaOperadores lista;
+    char* tipoExpressao;
+    int index = pesquisa_declvar_tabela(ident_proc);
+    if(index == -1){
+        printf("ERRO: Variavel %s nao declarada", ident_proc);
+        exit(1);
+    }
+
+
     lexico(fila);
-    analisa_expressao(fila);
+    lista = analisa_expressao(fila);
+    tipoExpressao = analisa_tipo_expressao(lista);
+    printf("\nO tipo final eh %s\n",tipoExpressao );
+    if(strcmp(tSimb.simbolos[index].tipo, tipoExpressao) != 0){
+        printf("ERRO: Expressao do tipo %s e variavel do tipo %s",tipoExpressao,tSimb.simbolos[index].tipo);
+    }
+
 }
 
 void analisa_tipo(fila_tokens *fila, int qtdVar) {
@@ -522,7 +624,7 @@ void analisa_atrib_chprocedimento(fila_tokens *fila) {
     strcpy(ident_proc, token_atual.lexema);
     lexico(fila);
     if(strcmp(token_atual.simbolo, "satribuicao") == 0) {
-        analisa_atribuicao(fila);
+        analisa_atribuicao(fila,ident_proc);
     }
     else {
         analisa_chamada_procedimento(fila, ident_proc);
@@ -677,7 +779,7 @@ void analisa_bloco(fila_tokens *fila) {
 void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
     int ind;
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
-        printf("%s\n", token_atual.lexema);
+        //printf("%s\n", token_atual.lexema);
         insere_lista(token_atual,lista);
         if(pesquisa_tabela(token_atual.lexema, &ind)) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
