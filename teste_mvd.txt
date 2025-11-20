@@ -1,7 +1,8 @@
 programa exemplo6;
  var x,y: inteiro;
  procedimento p;
- var z: inteiro;
+ var z,i: inteiro;
+ d,n: booleano;
  inicio
  z:= x; x:=x-1;
 se (x + 7 * 5 div (30+y) <= (x*z+2))e(y>0) entao p

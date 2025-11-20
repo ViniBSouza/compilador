@@ -1,42 +1,56 @@
-    START               
-    ALLOC       0   1   
-    ALLOC       1   2   
-    JMP       1       
-2   NULL               
-    ALLOC       3   1   
-    LDV       1       
-    LDV       1       
-    LDC       1       
-    SUB               
-    LDV       1       
-    LDC       7       
-    LDC       5       
-    MULT               
-    LDC       30       
-    LDV       2       
-    ADD               
-    DIVI               
-    ADD               
-    LDV       1       
-    LDV       4       
-    MULT               
-    LDC       2       
-    ADD               
-    CMEQ               
-    LDV       2       
-    LDC       0       
-    CMA               
-    AND               
-    LDC       1       
-    LDV       2       
-    LDV         4     
-    MULT               
-    RETURN               
-1   NULL               
-    RD               
-    STR       1       
-    LDV       2       
-    PRN               
-    LDV       1       
-    PRN               
-    HLT               
+    START           
+    ALLOC   0   1   
+    ALLOC   1   2   
+    JMP     1       
+2   NULL            
+    ALLOC   3   2   
+    ALLOC   5   2   
+    LDV     1       
+    STORE   1       
+    LDV     1       
+    LDC     1       
+    SUB             
+    STORE   1       
+    LDV     1       
+    LDC     7       
+    LDC     5       
+    MULT            
+    LDC     30      
+    LDV     2       
+    ADD             
+    DIVI            
+    ADD             
+    LDV     1       
+    LDV     3       
+    MULT            
+    LDC     2       
+    ADD             
+    CMEQ            
+    LDV     2       
+    LDC     0       
+    CMA             
+    AND             
+    JMPF    3       
+    CALL    2       
+    JMP     4       
+    NULL    3       
+    LDC     1       
+    STORE   1       
+    NULL    4       
+    LDV     2       
+    LDV     3       
+    MULT            
+    STORE   1       
+    DALLOC  3   4   
+    RETURN          
+1   NULL            
+    RD              
+    STR     1       
+    CALL    2       
+    LDV     2       
+    PRN             
+    LDV     1       
+    PRN             
+    DALLOC  1   2   
+    DALLOC  0   1   
+    HLT             
