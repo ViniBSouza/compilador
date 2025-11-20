@@ -61,62 +61,6 @@ void gera(int rot, const char *arg1, int arg2, int arg3) {
     }
 }
 
-/*
-int precedencia(char *operador) {
-    switch(operador) {
-        case:
-    }
-}
-*/
-
-
-/*
-int verifica_procedencia(char *operador1, char *operador2) {
-    if(precedencia(operador1) > precedencia(operador2)) {
-        return 1;
-    }
-    return 0;
-}
-
-*/
-/*
-void analisa_operador(char *operador) {
-
-    while()
-
-}
-*/
-/*
-void posfixa() {
-    for(int i = 0; i < n; i++) {
-        if(strcmp())
-    }
-}
-*/
-/*
-char converte_posfixa(const char *lexema) { //expressao = x-3
-
-    int tam = strlen(expressao);
-    for(int i = 0; i < tam; i++) {
-        if(isalpha(expressao[i]) || isdigit(expressao[i])) {
-           // expr_pos := expr_pos + expressao[i]
-        }
-        else if(strcmp(expressao[i], '(') == 0) {
-            //empilha '('
-        }
-        else if(strcmp(expressao[i], ')') == 0) {
-            //desempilha
-            while(strcmp(expressao[i], '(') != 0) {
-                //desempilha tudo
-            }
-        }
-        else if(strcmp(expressao[i], ''))
-    }
-
-    return expr_pos;
-}
-*/
-
 void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int rot) {
     tSimb.tamanho++;
 
@@ -166,12 +110,12 @@ void imprime_tabela() {
 }
 
 int pesquisa_duplicvar_tabela(const char *lexema) {
-    for(int i = tSimb.tamanho; i >= 0; i--) {
+    for(int i = tSimb.tamanho - 1; i >= 0; i--) {
+        if(strcmp(tSimb.simbolos[i].escopo, "L") == 0){
+            return 0;
+        }
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             return 1;
-        }
-        if(strcmp(tSimb.simbolos[i].escopo, "L")){
-            return 0;
         }
     }
     return 0;
@@ -188,7 +132,7 @@ int pesquisa_duplicfunc_tabela(const char *lexema) {
 }
 
 int pesquisa_declvarfunc_tabela(const char * lexema) {
-    for(int i = 0; i < tSimb.tamanho; i++) {
+    for(int i = 0; i < tSimb.tamanho - 1; i++) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             if(strcmp(tSimb.simbolos[i].tipo, "inteiro") || strcmp(tSimb.simbolos[i].tipo, "booleano")){
                 return 1;
@@ -197,6 +141,7 @@ int pesquisa_declvarfunc_tabela(const char * lexema) {
                 return 1;
             }
             printf("ERRO: variavel ou funcao nao declarada");
+            exit(1);
         }
     }
 
@@ -223,6 +168,7 @@ int pesquisa_declvar_tabela(const char *lexema) {
                 return i;
             }
             printf("ERRO: variavel nao declarada");
+            exit(1);
         }
     }
 
@@ -232,8 +178,9 @@ int pesquisa_declvar_tabela(const char *lexema) {
 int pesquisa_declproc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
-            printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
+            printf("Erro: nao e possivel criar um procedimento como o nome %s pois ja existe uma variavel/funcao/procedimento\n", token_atual.lexema);
             //printf("%s", tSimb.simbolos[i].lexema);
+            exit(1);
             return 0;
         }
     }
@@ -256,6 +203,7 @@ int pesquisa_declfunc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
+            exit(1);
             //printf("%s", tSimb.simbolos[i].lexema);
             return 0;
         }
@@ -286,10 +234,9 @@ int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
         }
     }
     printf("Erro: procedimento %s nao existe", ident_proc);
+    exit(1);
     return 1;
 }
-
-
 
 int precedencia(char* operador){
 
@@ -479,6 +426,7 @@ void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
     printf("\nO tipo final eh %s\n",tipoExpressao );
     if(strcmp(tSimb.simbolos[index].tipo, tipoExpressao) != 0){
         printf("ERRO: Expressao do tipo %s e variavel do tipo %s",tipoExpressao,tSimb.simbolos[index].tipo);
+        exit(1);
     }
 
 }
@@ -486,6 +434,7 @@ void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
 void analisa_tipo(fila_tokens *fila, int qtdVar) {
     if(strcmp(token_atual.simbolo, "sinteiro") != 0 && strcmp(token_atual.simbolo, "sbooleano") != 0) {
         printf("ERRO analisa_tipo: tipo de variavel invalida\n");
+        exit(1);
     }
     else {
         coloca_tipo_tabela(token_atual.lexema, qtdVar);
@@ -510,22 +459,27 @@ void analisa_leia(fila_tokens *fila) {
                     }
                     else {
                         printf("ERRO analisa_leia: esperado <)>\n");
+                        exit(1);
                     }
             }
             else if(index != -1){
                 printf("lexema atual: %s", token_atual.lexema);
                 printf("Erro: leia nao aceita variavel do tipo %s\n", tSimb.simbolos[index].tipo);
+                exit(1);
             }
             else {
                 printf("ERRO variavel %s nao foi declarada\n", token_atual.lexema);
+                exit(1);
             }
         }
         else {
             printf("ERRO analisa_leia: esperado identificador\n");
+            exit(1);
         }
     }
     else {
         printf("ERRO analisa_leia: esperado <(>\n");
+        exit(1);
     }
 }
 
@@ -546,21 +500,26 @@ void analisa_escreva(fila_tokens *fila) {
                 }
                 else {
                     printf("ERRO analisa_escreva: esperado <)>\n");
+                    exit(1);
                 }
             }
             else if(index != -1){
                 printf("Erro: escreva nao aceita variavel do tipo %s\n", tSimb.simbolos[index].tipo);
+                exit(1);
             }
             else {
                 printf("ERRO: variavel %s nao foi declarada\n", token_atual.lexema);
+                exit(1);
             }
         }
         else {
             printf("ERRO analisa_escreva: esperado identificador\n");
+            exit(1);
         }
     }
     else {
         printf("ERRO analisa_escreva: esperado <(>\n");
+        exit(1);
     }
 }
 
@@ -569,7 +528,7 @@ void analisa_variaveis(fila_tokens *fila) {
     while(strcmp(token_atual.simbolo, "sdoispontos") != 0) {
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
             qtdVar++;
-            if(!pesquisa_duplicvar_tabela(token_atual.lexema)){
+            if(!pesquisa_duplicvar_tabela(token_atual.lexema)){ //1 eh verdadeiro
                 insere_tabela(token_atual.lexema, "variavel", "", 0);
                 lexico(fila);
                 if(strcmp(token_atual.simbolo, "svirgula") == 0 || strcmp(token_atual.simbolo, "sdoispontos") == 0) {
@@ -583,14 +542,17 @@ void analisa_variaveis(fila_tokens *fila) {
                 }
                 else {
                     printf("ERRO analisa_variaveis: esperado <,> ou <:>\n");
+                    exit(1);
                 }
             }
             else {
                 printf("ERRO: variavel com o nome %s ja existe", token_atual.lexema);
+                exit(1);
             }
         }
         else {
             printf("ERRO analisa_variaveis: esperado identificador\n");
+            exit(1);
         }
     }
     lexico(fila);
@@ -610,11 +572,13 @@ void analisa_et_variaveis(fila_tokens *fila) {
                 }
                 else {
                     printf("ERRO analisa_et_variaveis: esperado <;>\n");
+                    exit(1);
                 }
             }
         }
         else {
             printf("ERRO analisa_et_variaveis: esperado identificador\n");
+            exit(1);
         }
     }
 }
@@ -644,6 +608,7 @@ void analisa_se(fila_tokens *fila) {
     }
     else {
         printf("ERRO analisa_se: esperado <entao>\n");
+        exit(1);
     }
 }
 
@@ -651,22 +616,23 @@ void analisa_enquanto(fila_tokens *fila) {
     int auxrot1, auxrot2;
 
     auxrot1 = rotulo;
-    gera(rotulo, "NULL", 0, 0); //acho que null é uma string aqui
+    gera(rotulo, "NULL", -1, -1); //acho que null é uma string aqui
     rotulo++;
 
     lexico(fila);
     analisa_expressao(fila);
     if(strcmp(token_atual.simbolo, "sfaca") == 0) {
         auxrot2 = rotulo;
-        gera(0, "JMPF", rotulo, 0);
+        gera(-1, "JMPF", rotulo, -1);
         rotulo++;
         lexico(fila);
         analisa_comando_simples(fila);
-        gera(0, "JMP", auxrot1, 0);
-        gera(auxrot2, NULL, 0, 0);
+        gera(-1, "JMP", auxrot1, -1);
+        gera(auxrot2, NULL, -1, -1);
     }
     else {
         printf("ERRO analisa_enquanto: esperado <faca>\n");
+        exit(1);
     }
 }
 
@@ -685,14 +651,17 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
             }
             else {
                 printf("ERRO analisa_declaracao_procedimento: esperado <;>\n");
+                exit(1);
             }
         }
         else {
             printf("ERRO: Procedimento ja foi declarado\n");
+            exit(1);
         }
     }
     else {
         printf("ERRO analisa_declaracao_procedimento: esperado identificador\n");
+        exit(1);
     }
     remove_tabela();
     gera(-1, "RETURN", -1, -1); //acho que é aqui
@@ -723,15 +692,18 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
                 }
                 else {
                     printf("ERRO analisa_declaracao_funcao: tipo invalido\n");
+                    exit(1);
                 }
             }
             else {
                 printf("ERRO analisa_declaracao_funcao: esperado <:>\n");
+                exit(1);
             }
         }
     }
     else {
         printf("ERRO analisa_declaracao_funcao: esperado identificador\n");
+        exit(1);
     }
     remove_tabela();
     gera(-1, "RETURN", -1, -1); //acho que é aqui RETURNF????
@@ -761,6 +733,7 @@ void analisa_subrotinas(fila_tokens *fila) {
         }
         else {
             printf("ERRO analisa_subrotinas: esperado <;>\n");
+            exit(1);
         }
     }
 
@@ -791,6 +764,7 @@ void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
         }
         else {
             printf("Erro: identificador nao encontrado\n");
+            exit(1);
         }
     }
     else if(strcmp(token_atual.simbolo, "snumero") == 0) {
@@ -814,6 +788,7 @@ void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
         }
         else {
             printf("ERRO analisa_fator: esperado <)>\n");
+            exit(1);
         }
     }
     else if(strcmp(token_atual.lexema, "verdadeiro") == 0 || strcmp(token_atual.lexema, "falso") == 0) {
@@ -877,6 +852,7 @@ void analisa_comandos(fila_tokens *fila) {
     else {
         printf("ERRO analisa_comandos: esperado sinicio\n");
         printf("%s", token_atual.lexema);
+        exit(1);
     }
 }
 
@@ -941,23 +917,28 @@ int main() {
                     }
                     else {
                         printf("ERRO");
+                        exit(1);
                     }
                 }
                 else {
                     printf("ERRO programa: esperado <.>\n");
+                    exit(1);
                 }
             }
             else {
                 printf("ERRO programa: esperado <;>");
+                exit(1);
             }
             //erro duplicvar
         }
         else{
             printf("ERRO programa: identificador nao encontrado\n");
+            exit(1);
         }
     }
     else {
         printf("ERRO programa: sprograma nao encontrado\n");
+        exit(1);
     }
 
     while(teste != 2){
