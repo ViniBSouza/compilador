@@ -1,17 +1,43 @@
-programa exemplo6;
- var x,y: inteiro;
- procedimento p;
- var z,i: inteiro;
- d,n: booleano;
+{Teste OK}
+programa test1;
+var a,b,c,x: inteiro;
+{proc 1}
+procedimento analisa1;
+var x: inteiro;
+       z: booleano;
+ procedimento analisa2;
  inicio
- z:= x; x:=x-1;
-se (x + 7 * 5 div (30+y) <= (x*z+2))e(y>0) entao p
- senao y:=1;
- y:=y*z
- fim { p };
+   leia(a);b:=1;
+   b:= a*a+(c div b);
+   escreva(b)
+ fim;
+ funcao func1: inteiro;
+ inicio
+  analisa2;
+  func1:= +a-(-b);
+ fim;
 inicio
- leia(x);
-p;
-escreva (y);
-escreva (x)
- fim.
+  leia(x);
+  z:= verdadeiro;
+  se (x>1)ou (+x*(-100)>(-func1))e(nao z)  entao
+      inicio
+           x:= func1;
+           z:= falso;
+           escreva(x);
+      fim;
+  enquanto nao ( (-a*(-b) = 1064) ou (a<= (-1000)) ou z e (nao z))  {condicao de parada}
+  faca inicio
+           a:= x+b;
+           z:= falso ou nao falso
+       fim;
+  escreva(a)
+fim;
+inicio
+inicio
+    leia(c);
+    analisa1;
+    se b > (c+ a*a)
+    entao escreva(b)
+    senao escreva(c)
+fim
+fim.

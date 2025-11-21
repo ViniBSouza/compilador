@@ -29,6 +29,7 @@ extern token token_atual;
 extern FILE *arquivo;
 extern FILE *arquivo_obj;
 extern int caractere;
+extern int linha;
 
 
 void enfileira(token t);

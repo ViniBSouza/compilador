@@ -149,7 +149,7 @@ int pesquisa_declvarfunc_tabela(const char * lexema) {
             if(strcmp(tSimb.simbolos[i].tipo, "funcao_inteiro") || strcmp(tSimb.simbolos[i].tipo, "funcao_booleano")){
                 return 1;
             }
-            printf("ERRO: variavel ou funcao nao declarada");
+            printf("ERRO Linha %d: variavel ou funcao %s nao declarada",linha,lexema);
             exit(1);
         }
     }
@@ -176,7 +176,7 @@ int pesquisa_declvar_tabela(const char *lexema) {
             if(strcmp(tSimb.simbolos[i].tipo, "inteiro") || strcmp(tSimb.simbolos[i].tipo, "booleano")){
                 return i;
             }
-            printf("ERRO: variavel nao declarada");
+            printf("ERRO %d: variavel %s nao declarada",linha,lexema);
             exit(1);
         }
     }
@@ -187,7 +187,7 @@ int pesquisa_declvar_tabela(const char *lexema) {
 int pesquisa_declproc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
-            printf("Erro: nao e possivel criar um procedimento como o nome %s pois ja existe uma variavel/funcao/procedimento\n", token_atual.lexema);
+            printf("Erro Linha %d: nao e possivel criar um procedimento como o nome %s pois ja existe uma variavel/funcao/procedimento\n",linha, token_atual.lexema);
             //printf("%s", tSimb.simbolos[i].lexema);
             exit(1);
             return 0;
@@ -227,7 +227,7 @@ int encontra_func(const char *lexema,int *numVariavel, int *primeiroEndereco){
 int pesquisa_declfunc_tabela() {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
-            printf("Erro: ja existe uma variavel/funcao/procedimento com o nome %s\n", token_atual.lexema);
+            printf("Erro Linha %d: ja existe uma variavel/funcao/procedimento com o nome %s\n", linha,token_atual.lexema);
             exit(1);
             //printf("%s", tSimb.simbolos[i].lexema);
             return 0;
@@ -259,7 +259,7 @@ int analisa_chamada_procedimento(char *ident_proc) {
             }
         }
     }
-    printf("Erro: procedimento %s nao existe", ident_proc);
+    printf("Erro Linha %d: procedimento %s nao existe",linha, ident_proc);
     exit(1);
     return 1;
 }
@@ -391,7 +391,7 @@ ListaOperadores analisa_expressao() {
 
     printf("OLHA SO A MINHA EXPRESSAO POSFIXE EBAAAA: \n");
     for(int i = 0; i< lista.tamanho;i++){
-        printf("%s",lista.operadores[i].lexema);
+        printf("%s",lista.operadores[i].simbolo);
     }
 
     free(pilhapos);
@@ -402,12 +402,12 @@ void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT,char* lexema){
     int index;
     pesquisa_tabela(lexema,&index);
     if(index == 0){
-        printf("ERRO: variavel/funcao nao declarada");
+        printf("ERRO Linha %d: variavel/funcao nao declarada",linha);
         exit(1);
     }
 
     if(strcmp(tSimb.simbolos[index].tipo,"nomedeprograma") == 0 || strcmp(tSimb.simbolos[index].tipo,"procedimento") == 0){
-        printf("ERRO: %s nao eh variavel/funcao", lexema);
+        printf("ERRO Linha: %d: %s nao eh variavel/funcao",linha, lexema);
         exit(1);
     }
     if(strcmp(tSimb.simbolos[index].tipo, "funcao_inteiro") == 0) {
@@ -445,7 +445,7 @@ char* analisa_tipo_expressao(ListaOperadores lista){
             for(j = 0; j< 2; j++){
                 tipo = popTipo(pilhaT);
                 if(strcmp(tipo,"inteiro") != 0){
-                    printf("ERRO: esperado dois inteiros na expressao para o sinal %s ",lista.operadores[i].lexema);
+                    printf("ERRO Linha %d: esperado dois inteiros na expressao para o sinal %s ",linha,lista.operadores[i].lexema);
                     exit(1);
                 }
             }
@@ -459,7 +459,7 @@ char* analisa_tipo_expressao(ListaOperadores lista){
             for(j = 0; j< 2; j++){
                 tipo = popTipo(pilhaT);
                 if(strcmp(tipo,"booleano") != 0){
-                    printf("ERRO: esperado dois booleanos na expressao para o sinal %s ",lista.operadores[i].lexema);
+                    printf("ERRO Linha %d: esperado dois booleanos na expressao para o sinal %s ",linha,lista.operadores[i].lexema);
                     exit(1);
                 }
             }
@@ -467,14 +467,14 @@ char* analisa_tipo_expressao(ListaOperadores lista){
         }else if(precedenciaOperador == 7){
             tipo = popTipo(pilhaT);
             if(strcmp(tipo,"intero") != 0 ){
-                printf("ERRO: esperado um inteiro na expressao para o sinal unario %s ",lista.operadores[i].lexema);
+                printf("ERRO %d: esperado um inteiro na expressao para o sinal unario %s ",linha,lista.operadores[i].lexema);
                 exit(1);
             }
             pushTipo(pilhaT,"inteiro");
         }else if (precedenciaOperador == 2){
             tipo = popTipo(pilhaT);
             if(strcmp(tipo,"inteiro") == 0 ){
-                printf("ERRO: esperado um booleano na expressao para o sinal unario %s ",lista.operadores[i].lexema);
+                printf("ERRO Linha %d: esperado um booleano na expressao para o sinal unario %s ",linha,lista.operadores[i].lexema);
                 exit(1);
             }
             pushTipo(pilhaT,"booleano");
@@ -494,14 +494,14 @@ void analisa_atribuicao(char* ident_proc) {
     lexico();
     lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
-    printf("\nO tipo final eh %s\n",tipoExpressao );
+    //printf("\nO tipo final eh %s\n",tipoExpressao );
 
     int index = encontra_func(ident_proc,&numVariavel,&indexUltimaVariavel);
 
     if(strcmp(tSimb.simbolos[index].lexema,ident_proc) == 0){
         //Atribuição de retorno
         if(strcmp(tSimb.simbolos[index].tipo, tipoExpressao) != 0){
-            printf("ERRO: Expressao do tipo %s e funcao do tipo %s",tipoExpressao,tSimb.simbolos[index].tipo);
+            printf("ERRO Linha %d: Expressao do tipo %s e funcao do tipo %s",linha,tipoExpressao,tSimb.simbolos[index].tipo);
             exit(1);
         }
         gera(-1,"STR",0,-1);
@@ -512,12 +512,12 @@ void analisa_atribuicao(char* ident_proc) {
 
         index = pesquisa_declvar_tabela(ident_proc);
         if(index == -1){
-            printf("ERRO: Variavel %s nao declarada", ident_proc);
+            printf("ERRO Linha %d: Variavel %s nao declarada",linha, ident_proc);
             exit(1);
         }
 
         if(strcmp(tSimb.simbolos[index].tipo, tipoExpressao) != 0){
-            printf("ERRO: Expressao do tipo %s e variavel do tipo %s",tipoExpressao,tSimb.simbolos[index].tipo);
+            printf("ERRO Linha %d: Expressao do tipo %s e variavel do tipo %s",linha,tipoExpressao,tSimb.simbolos[index].tipo);
             exit(1);
         }
 
@@ -528,7 +528,7 @@ void analisa_atribuicao(char* ident_proc) {
 
 void analisa_tipo(int qtdVar) {
     if(strcmp(token_atual.simbolo, "sinteiro") != 0 && strcmp(token_atual.simbolo, "sbooleano") != 0) {
-        printf("ERRO analisa_tipo: tipo de variavel invalida\n");
+        printf("ERRO Linha %d: tipo de variavel invalida\n",linha);
         exit(1);
     }
     else {
@@ -553,27 +553,27 @@ void analisa_leia() {
                         lexico();
                     }
                     else {
-                        printf("ERRO analisa_leia: esperado <)>\n");
+                        printf("ERRO Linha %d: esperado ')'\n",linha);
                         exit(1);
                     }
             }
             else if(index != -1){
                 printf("lexema atual: %s", token_atual.lexema);
-                printf("Erro: leia nao aceita variavel do tipo %s\n", tSimb.simbolos[index].tipo);
+                printf("Erro Linha %d: leia nao aceita variavel do tipo %s\n",linha, tSimb.simbolos[index].tipo);
                 exit(1);
             }
             else {
-                printf("ERRO variavel %s nao foi declarada\n", token_atual.lexema);
+                printf("ERRO Linha %d: variavel %s nao foi declarada\n",linha, token_atual.lexema);
                 exit(1);
             }
         }
         else {
-            printf("ERRO analisa_leia: esperado identificador\n");
+            printf("ERRO Linha %d:: nome de variavel invalido\n",linha);
             exit(1);
         }
     }
     else {
-        printf("ERRO analisa_leia: esperado <(>\n");
+        printf("ERRO Linha %d: esperado '('\n",linha);
         exit(1);
     }
 }
@@ -593,26 +593,26 @@ void analisa_escreva() {
                     lexico();
                 }
                 else {
-                    printf("ERRO analisa_escreva: esperado <)>\n");
+                    printf("ERRO Linha %d: esperado ')'\n",linha);
                     exit(1);
                 }
             }
             else if(index != -1){
-                printf("Erro: escreva nao aceita variavel do tipo %s\n", tSimb.simbolos[index].tipo);
+                printf("Erro Linha %d: escreva nao aceita variavel do tipo %s\n",linha, tSimb.simbolos[index].tipo);
                 exit(1);
             }
             else {
-                printf("ERRO: variavel %s nao foi declarada\n", token_atual.lexema);
+                printf("ERRO Linha %d: variavel %s nao foi declarada\n",linha, token_atual.lexema);
                 exit(1);
             }
         }
         else {
-            printf("ERRO analisa_escreva: esperado identificador\n");
+            printf("ERRO Linha %d:: nome de variavel invalido\n",linha);
             exit(1);
         }
     }
     else {
-        printf("ERRO analisa_escreva: esperado <(>\n");
+        printf("ERRO Linha %d: esperado '('\n",linha);
         exit(1);
     }
 }
@@ -629,23 +629,23 @@ void analisa_variaveis() {
                     if(strcmp(token_atual.simbolo, "svirgula") == 0) {
                         lexico();
                         if(strcmp(token_atual.simbolo, "sidentificador") != 0) {
-                            printf("ERRO: esperado variavel\n");
+                            printf("ERRO Linha %d: nome de variavel invalido\n", linha);
                             exit(1);
                         }
                     }
                 }
                 else {
-                    printf("ERRO analisa_variaveis: esperado <,> ou <:>\n");
+                    printf("ERRO Linha: esperado ',' ou ':'\n");
                     exit(1);
                 }
             }
             else {
-                printf("ERRO: variavel com o nome %s ja existe", token_atual.lexema);
+                printf("ERRO Linha %d: variavel com o nome %s ja existe", linha,token_atual.lexema);
                 exit(1);
             }
         }
         else {
-            printf("ERRO analisa_variaveis: esperado identificador\n");
+            printf("ERRO Linha %d: nome da variavel invalido\n",linha);
             exit(1);
         }
     }
@@ -665,13 +665,13 @@ void analisa_et_variaveis() {
                     lexico();
                 }
                 else {
-                    printf("ERRO analisa_et_variaveis: esperado <;>\n");
+                    printf("ERRO Linha %d: esta faltando ';'\n",linha);
                     exit(1);
                 }
             }
         }
         else {
-            printf("ERRO analisa_et_variaveis: esperado identificador\n");
+            printf("ERRO Linha: %d: nome da variavel invalido \n",linha);
             exit(1);
         }
     }
@@ -699,10 +699,10 @@ void analisa_se() {
     char* tipoExpressao;
     lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
-    printf("\nO tipo final eh %s\n",tipoExpressao );
+    //printf("\nO tipo final eh %s\n",tipoExpressao );
 
     if(strcmp("booleano", tipoExpressao) != 0){
-        printf("ERRO: Expressao tipo inteiro dentro de se");
+        printf("ERRO Linha %d: Expressao tipo inteiro dentro de 'se',esperado booleano",linha);
         exit(1);
     }
     gera(-1, "JMPF",rotulo,-1);
@@ -720,7 +720,7 @@ void analisa_se() {
         }
     }
     else {
-        printf("ERRO analisa_se: esperado <entao>\n");
+        printf("ERRO Linha %d: esperado entao 'entao' apos comando 'se' \n",linha);
         exit(1);
     }
     gera(auxrot2,"NULL",-1,-1);
@@ -739,9 +739,9 @@ void analisa_enquanto() {
     char* tipoExpressao;
     lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
-    printf("\nO tipo final eh %s\n",tipoExpressao );
+    //printf("\nO tipo final eh %s\n",tipoExpressao );
     if(strcmp("booleano", tipoExpressao) != 0){
-        printf("ERRO: Expressao tipo inteiro dentro de enquanto");
+        printf("ERRO Linha %d: Expressao retorna tipo inteiro, esperado tipo booleano",linha);
     }
 
 
@@ -755,7 +755,7 @@ void analisa_enquanto() {
         gera(auxrot2, NULL, -1, -1);
     }
     else {
-        printf("ERRO analisa_enquanto: esperado <faca>\n");
+        printf("ERRO Linha %d: esperado faca apos enquanto\n",linha);
         exit(1);
     }
 }
@@ -774,17 +774,17 @@ void analisa_declaracao_procedimento() {
                 analisa_bloco();
             }
             else {
-                printf("ERRO analisa_declaracao_procedimento: esperado <;>\n");
+                printf("ERRO Linha %d: esta faltando ';'\n",linha);
                 exit(1);
             }
         }
         else {
-            printf("ERRO: Procedimento ja foi declarado\n");
+            printf("ERRO Linha %d: procedimento %s ja foi declarado\n",linha,token_atual.lexema);
             exit(1);
         }
     }
     else {
-        printf("ERRO analisa_declaracao_procedimento: esperado identificador\n");
+        printf("ERRO Linha %d: esta faltando um nome valido para o procedimento\n",linha);
         exit(1);
     }
     remove_tabela();
@@ -817,18 +817,18 @@ void analisa_declaracao_funcao() {
                     }
                 }
                 else {
-                    printf("ERRO analisa_declaracao_funcao: tipo invalido\n");
+                    printf("ERRO Linha %d: o tipo de funcao esta invalido\n",linha);
                     exit(1);
                 }
             }
             else {
-                printf("ERRO analisa_declaracao_funcao: esperado <:>\n");
+                printf("ERRO Linha %d: esta faltando ':'\n",linha);
                 exit(1);
             }
         }
     }
     else {
-        printf("ERRO analisa_declaracao_funcao: esperado identificador\n");
+        printf("ERRO Linha %d: esta faltando o nome da funcao em sua declaracao\n",linha);
         exit(1);
     }
     remove_tabela();
@@ -858,7 +858,7 @@ void analisa_subrotinas() {
             lexico();
         }
         else {
-            printf("ERRO analisa_subrotinas: esperado <;>\n");
+            printf("ERRO %d: esta faltando ';'\n",linha);
             exit(1);
         }
     }
@@ -889,7 +889,7 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
                 }
         }
         else {
-            printf("Erro: identificador nao encontrado\n");
+            printf("Erro linha %d: %s nao e nome de funcao ou variavel\n",linha,token_atual.lexema);
             exit(1);
         }
     }
@@ -913,7 +913,7 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
             lexico();
         }
         else {
-            printf("ERRO analisa_fator: esperado <)>\n");
+            printf("ERRO Linha %d: esta faltando ) \n",linha);
             exit(1);
         }
     }
@@ -923,7 +923,7 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
     }
     else {
         printf("%s", token_atual.simbolo);
-        printf("ERRO analisa_fator: entrada invalida\n");
+        printf("ERRO Linha %d: %s nao e valido na expressao\n",linha,token_atual.lexema);
         exit(1);
     }
 }
@@ -968,7 +968,7 @@ void analisa_comandos() {
             }
             else {
 
-                printf("ERRO analisa_comandos: esperado <;>\n");
+                printf("ERRO Linha %d: esta faltando ;\n",linha);
                 exit(1);
             }
 
@@ -976,8 +976,7 @@ void analisa_comandos() {
         lexico();
     }
     else {
-        printf("ERRO analisa_comandos: esperado sinicio\n");
-        printf("%s", token_atual.lexema);
+        printf("ERRO Linha %d: esta faltando inicio apos comando\n",linha);
         exit(1);
     }
 }
@@ -1061,23 +1060,23 @@ int main() {
                     }
                 }
                 else {
-                    printf("ERRO programa: esperado <.>\n");
+                    printf("ERRO Linha %d programa: esperado <.>\n",linha);
                     exit(1);
                 }
             }
             else {
-                printf("ERRO programa: esperado <;>");
+                printf("ERRO Linha %d: esta faltando ;",linha);
                 exit(1);
             }
             //erro duplicvar
         }
         else{
-            printf("ERRO programa: identificador nao encontrado\n");
+            printf("ERRO Linha %d: esta faltando nome do programa\n",linha);
             exit(1);
         }
     }
     else {
-        printf("ERRO programa: sprograma nao encontrado\n");
+        printf("ERRO Linha %d: esta faltando programa\n",linha);
         exit(1);
     }
 
@@ -1091,6 +1090,5 @@ int main() {
     }
 
     fclose(arquivo);
-    imprime_tabela();
     return 0;
 }

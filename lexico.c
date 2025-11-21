@@ -10,6 +10,7 @@ token token_atual;
 FILE *arquivo = NULL;
 FILE *arquivo_obj = NULL;
 int caractere;
+int linha = 1;
 
 
 
@@ -178,18 +179,22 @@ void pega_token() {
     else if (caractere == '!' || caractere == '<' || caractere == '>' || caractere == '=') trata_operador_relacional();
     else if (caractere == ';' || caractere == ',' || caractere == '(' || caractere == ')' || caractere == '.') trata_pontuacao();
     else {
-        printf(" Erro: caractere inv�lido <%c>\n", caractere);
+        printf(" Erro: caractere invalido <%c>\n", caractere);
         caractere = fgetc(arquivo);
     }
 }
 
 int lexico() {
     while(caractere == ' ' || caractere == '\n' || caractere == '\t' || caractere == '{') {
+        if(caractere == '\n'){
+            linha++;
+        }
         if(caractere == '{') {
             while(caractere != '}' && caractere != EOF) {
                 caractere = fgetc(arquivo);
+
                 if(caractere == EOF) {
-                    printf(" Erro! Coment�rio n�o fechado\n");
+                    printf(" Erro: Comentario nao fechado\n");
                     return -1;
                 }
             }
