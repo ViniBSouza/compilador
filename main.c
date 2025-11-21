@@ -22,14 +22,14 @@ int endereco_tabela = 0;
 int endereco_mvd = 1;
 int rotulo = 0;
 
-void analisa_comandos(fila_tokens *fila);
-void analisa_comando_simples(fila_tokens *fila);
-void analisa_expressao_simples(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
-void analisa_termo(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
-void analisa_fator(fila_tokens *fila, ListaOperadores *lista,Pilha *pilhapos);
-void analisa_declaracao_procedimento(fila_tokens *fila);
-void analisa_subrotinas(fila_tokens *fila);
-void analisa_bloco(fila_tokens *fila);
+void analisa_comandos();
+void analisa_comando_simples();
+void analisa_expressao_simples(ListaOperadores *lista,Pilha *pilhapos);
+void analisa_termo(ListaOperadores *lista,Pilha *pilhapos);
+void analisa_fator( ListaOperadores *lista,Pilha *pilhapos);
+void analisa_declaracao_procedimento();
+void analisa_subrotinas();
+void analisa_bloco();
 
 void gera(int rot, const char *arg1, int arg2, int arg3) {
     if (arquivo_obj == NULL) {
@@ -238,7 +238,7 @@ int pesquisa_declfunc_tabela() {
 }
 
 //fazer
-void analisa_chamada_funcao(fila_tokens *fila) {
+void analisa_chamada_funcao() {
     /* pesquisa_declvarfunc_tabela(token_atual.lexema);
     printf("oi sou o %s\n", token_atual.lexema);
     lexico(fila);
@@ -246,7 +246,7 @@ void analisa_chamada_funcao(fila_tokens *fila) {
 }
 
 //fazer
-int analisa_chamada_procedimento(fila_tokens *fila, char *ident_proc) {
+int analisa_chamada_procedimento(char *ident_proc) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(ident_proc, tSimb.simbolos[i].lexema) == 0) {
             if(strcmp(tSimb.simbolos[i].tipo, "procedimento") == 0) {
@@ -371,18 +371,18 @@ void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
 
 }
 
-ListaOperadores analisa_expressao(fila_tokens *fila) {
+ListaOperadores analisa_expressao() {
     Pilha * pilhapos = criaPilha();
     ListaOperadores lista;
     lista.operadores = NULL;
     lista.tamanho = 0;
-    analisa_expressao_simples(fila,&lista,pilhapos);
+    analisa_expressao_simples(&lista,pilhapos);
     if(strcmp(token_atual.simbolo, "smaior") == 0 || strcmp(token_atual.simbolo, "smaiorig") == 0 ||
        strcmp(token_atual.simbolo, "sig") == 0 || strcmp(token_atual.simbolo, "smenor") == 0 ||
        strcmp(token_atual.simbolo, "smenorig") == 0 || strcmp(token_atual.simbolo, "sdif") == 0) {
         trataOperadorPos(&lista,pilhapos);
-        lexico(fila);
-        analisa_expressao_simples(fila,&lista,pilhapos);
+        lexico();
+        analisa_expressao_simples(&lista,pilhapos);
     }
 
     while(pilhapos->topo != NULL){
@@ -486,13 +486,13 @@ char* analisa_tipo_expressao(ListaOperadores lista){
     return popTipo(pilhaT);
 }
 
-void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
+void analisa_atribuicao(char* ident_proc) {
     ListaOperadores lista;
     char* tipoExpressao;
     int numVariavel,indexUltimaVariavel;
 
-    lexico(fila);
-    lista = analisa_expressao(fila);
+    lexico();
+    lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
     printf("\nO tipo final eh %s\n",tipoExpressao );
 
@@ -526,31 +526,31 @@ void analisa_atribuicao(fila_tokens *fila ,char* ident_proc) {
     }
 }
 
-void analisa_tipo(fila_tokens *fila, int qtdVar) {
+void analisa_tipo(int qtdVar) {
     if(strcmp(token_atual.simbolo, "sinteiro") != 0 && strcmp(token_atual.simbolo, "sbooleano") != 0) {
         printf("ERRO analisa_tipo: tipo de variavel invalida\n");
         exit(1);
     }
     else {
         coloca_tipo_tabela(token_atual.lexema, qtdVar);
-        lexico(fila);
+        lexico();
     }
 }
 
-void analisa_leia(fila_tokens *fila) {
+void analisa_leia() {
 
-    lexico(fila);
+    lexico();
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
-        lexico(fila);
+        lexico();
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
 
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
                     gera(-1, "RD", -1, -1);
                     gera(-1, "STR", tSimb.simbolos[index].endereco, -1);
-                    lexico(fila);
+                    lexico();
                     if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
-                        lexico(fila);
+                        lexico();
                     }
                     else {
                         printf("ERRO analisa_leia: esperado <)>\n");
@@ -578,19 +578,19 @@ void analisa_leia(fila_tokens *fila) {
     }
 }
 
-void analisa_escreva(fila_tokens *fila) {
+void analisa_escreva() {
 
-    lexico(fila);
+    lexico();
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
-        lexico(fila);
+        lexico();
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
             int index = pesquisa_declvar_tabela(token_atual.lexema);
             if(index != -1 && strcmp(tSimb.simbolos[index].tipo, "inteiro") == 0) {
                 gera(-1, "LDV", tSimb.simbolos[index].endereco, -1);
                 gera(-1, "PRN", -1, -1);
-                lexico(fila);
+                lexico();
                 if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
-                    lexico(fila);
+                    lexico();
                 }
                 else {
                     printf("ERRO analisa_escreva: esperado <)>\n");
@@ -617,17 +617,17 @@ void analisa_escreva(fila_tokens *fila) {
     }
 }
 
-void analisa_variaveis(fila_tokens *fila) {
+void analisa_variaveis() {
     int qtdVar = 0;
     while(strcmp(token_atual.simbolo, "sdoispontos") != 0) {
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
             qtdVar++;
             if(!pesquisa_duplicvar_tabela(token_atual.lexema)){ //1 eh verdadeiro
                 insere_tabela(token_atual.lexema, "variavel", "", 0);
-                lexico(fila);
+                lexico();
                 if(strcmp(token_atual.simbolo, "svirgula") == 0 || strcmp(token_atual.simbolo, "sdoispontos") == 0) {
                     if(strcmp(token_atual.simbolo, "svirgula") == 0) {
-                        lexico(fila);
+                        lexico();
                         if(strcmp(token_atual.simbolo, "sidentificador") != 0) {
                             printf("ERRO: esperado variavel\n");
                             exit(1);
@@ -649,20 +649,20 @@ void analisa_variaveis(fila_tokens *fila) {
             exit(1);
         }
     }
-    lexico(fila);
-    analisa_tipo(fila, qtdVar);
+    lexico();
+    analisa_tipo(qtdVar);
     gera(-1, "ALLOC", endereco_mvd, qtdVar); //verificar depois
     endereco_mvd = endereco_mvd + qtdVar;   //verificar depois
 }
 
-void analisa_et_variaveis(fila_tokens *fila) {
+void analisa_et_variaveis() {
     if(strcmp(token_atual.simbolo, "svar") == 0) {
-        lexico(fila);
+        lexico();
         if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
             while(strcmp(token_atual.simbolo, "sidentificador") == 0) {
-                analisa_variaveis(fila);
+                analisa_variaveis();
                 if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-                    lexico(fila);
+                    lexico();
                 }
                 else {
                     printf("ERRO analisa_et_variaveis: esperado <;>\n");
@@ -677,27 +677,27 @@ void analisa_et_variaveis(fila_tokens *fila) {
     }
 }
 
-void analisa_atrib_chprocedimento(fila_tokens *fila) {
+void analisa_atrib_chprocedimento() {
     char ident_proc[50];
     strcpy(ident_proc, token_atual.lexema);
-    lexico(fila);
+    lexico();
     if(strcmp(token_atual.simbolo, "satribuicao") == 0) {
-        analisa_atribuicao(fila,ident_proc);
+        analisa_atribuicao(ident_proc);
     }
     else {
-        analisa_chamada_procedimento(fila, ident_proc);
+        analisa_chamada_procedimento(ident_proc);
     }
 }
 
-void analisa_se(fila_tokens *fila) {
+void analisa_se() {
     int auxrot = rotulo;
     int auxrot2;
 
 
-    lexico(fila);
+    lexico();
     ListaOperadores lista;
     char* tipoExpressao;
-    lista = analisa_expressao(fila);
+    lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
     printf("\nO tipo final eh %s\n",tipoExpressao );
 
@@ -708,15 +708,15 @@ void analisa_se(fila_tokens *fila) {
     gera(-1, "JMPF",rotulo,-1);
     rotulo++;
     if(strcmp(token_atual.simbolo, "sentao") == 0) {
-        lexico(fila);
-        analisa_comando_simples(fila);
+        lexico();
+        analisa_comando_simples();
         gera(-1,"JMP",rotulo,-1);
         gera(auxrot,"NULL",-1,-1);
         auxrot2 = rotulo;
         rotulo++;
         if(strcmp(token_atual.simbolo, "ssenao") == 0) {
-            lexico(fila);
-            analisa_comando_simples(fila);
+            lexico();
+            analisa_comando_simples();
         }
     }
     else {
@@ -727,17 +727,17 @@ void analisa_se(fila_tokens *fila) {
 
 }
 
-void analisa_enquanto(fila_tokens *fila) {
+void analisa_enquanto() {
     int auxrot1, auxrot2;
 
     auxrot1 = rotulo;
     gera(rotulo, "NULL", -1, -1); //acho que null � uma string aqui
     rotulo++;
 
-    lexico(fila);
+    lexico();
     ListaOperadores lista;
     char* tipoExpressao;
-    lista = analisa_expressao(fila);
+    lista = analisa_expressao();
     tipoExpressao = analisa_tipo_expressao(lista);
     printf("\nO tipo final eh %s\n",tipoExpressao );
     if(strcmp("booleano", tipoExpressao) != 0){
@@ -749,8 +749,8 @@ void analisa_enquanto(fila_tokens *fila) {
         auxrot2 = rotulo;
         gera(-1, "JMPF", rotulo, -1);
         rotulo++;
-        lexico(fila);
-        analisa_comando_simples(fila);
+        lexico();
+        analisa_comando_simples();
         gera(-1, "JMP", auxrot1, -1);
         gera(auxrot2, NULL, -1, -1);
     }
@@ -760,8 +760,8 @@ void analisa_enquanto(fila_tokens *fila) {
     }
 }
 
-void analisa_declaracao_procedimento(fila_tokens *fila) {
-    lexico(fila);
+void analisa_declaracao_procedimento() {
+    lexico();
     char nivel[2];
     strcpy(nivel, "L");
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
@@ -769,9 +769,9 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
             insere_tabela(token_atual.lexema, "procedimento", nivel, rotulo);
             gera(rotulo, "NULL", -1, -1);
             rotulo++;
-            lexico(fila);
+            lexico();
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-                analisa_bloco(fila);
+                analisa_bloco();
             }
             else {
                 printf("ERRO analisa_declaracao_procedimento: esperado <;>\n");
@@ -791,8 +791,8 @@ void analisa_declaracao_procedimento(fila_tokens *fila) {
     gera(-1, "RETURN", -1, -1); //acho que � aqui
 }
 
-void analisa_declaracao_funcao(fila_tokens *fila) {
-    lexico(fila);
+void analisa_declaracao_funcao() {
+    lexico();
     char nivel[2];
     strcpy(nivel, "L");
 
@@ -801,9 +801,9 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
             insere_tabela(token_atual.lexema, "", nivel, rotulo);
             gera(rotulo,"NULL",-1,-1);
             rotulo++;
-            lexico(fila);
+            lexico();
             if(strcmp(token_atual.simbolo, "sdoispontos") == 0) {
-                lexico(fila);
+                lexico();
                 if(strcmp(token_atual.simbolo, "sinteiro") == 0 || strcmp(token_atual.simbolo, "sbooleano") == 0) {
                     if(strcmp(token_atual.simbolo, "sinteiro") == 0) {
                         strcpy(tSimb.simbolos[tSimb.tamanho -1].tipo, "funcao_inteiro");
@@ -811,9 +811,9 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
                     else {
                         strcpy(tSimb.simbolos[tSimb.tamanho -1].tipo, "funcao_booleano");
                     }
-                    lexico(fila);
+                    lexico();
                     if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-                        analisa_bloco(fila);
+                        analisa_bloco();
                     }
                 }
                 else {
@@ -835,7 +835,7 @@ void analisa_declaracao_funcao(fila_tokens *fila) {
     gera(-1, "RETURNF", -1, -1); //acho que � aqui RETURNF????
 }
 
-void analisa_subrotinas(fila_tokens *fila) {
+void analisa_subrotinas() {
     int auxrot;
     int flag = 0;
 
@@ -848,14 +848,14 @@ void analisa_subrotinas(fila_tokens *fila) {
 
     while(strcmp(token_atual.simbolo, "sprocedimento") == 0 || strcmp(token_atual.simbolo, "sfuncao") == 0) {
         if(strcmp(token_atual.simbolo, "sprocedimento") == 0) {
-            analisa_declaracao_procedimento(fila);
+            analisa_declaracao_procedimento();
         }
         else {
-            analisa_declaracao_funcao(fila);
+            analisa_declaracao_funcao();
         }
 
         if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-            lexico(fila);
+            lexico();
         }
         else {
             printf("ERRO analisa_subrotinas: esperado <;>\n");
@@ -868,24 +868,24 @@ void analisa_subrotinas(fila_tokens *fila) {
     }
 }
 
-void analisa_bloco(fila_tokens *fila) {
-    lexico(fila);
-    analisa_et_variaveis(fila);
-    analisa_subrotinas(fila);
-    analisa_comandos(fila);
+void analisa_bloco() {
+    lexico();
+    analisa_et_variaveis();
+    analisa_subrotinas();
+    analisa_comandos();
 }
 
-void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
+void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
     int ind;
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         //printf("%s\n", token_atual.lexema);
         insere_lista(token_atual,lista);
         if(pesquisa_tabela(token_atual.lexema, &ind)) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
-                    analisa_chamada_funcao(fila);
+                    analisa_chamada_funcao();
                 }
                 else {
-                    lexico(fila);
+                    lexico();
                 }
         }
         else {
@@ -895,22 +895,22 @@ void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
     }
     else if(strcmp(token_atual.simbolo, "snumero") == 0) {
         insere_lista(token_atual,lista);
-        lexico(fila);
+        lexico();
     }
     else if(strcmp(token_atual.simbolo, "snao") == 0) {
         //unario
         trataOperadorPos(lista,pilhapos);
-        lexico(fila);
-        analisa_fator(fila,lista,pilhapos);
+        lexico();
+        analisa_fator(lista,pilhapos);
     }
     else if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
-        lexico(fila);
-        ListaOperadores expressaoParenteses = analisa_expressao(fila);
+        lexico();
+        ListaOperadores expressaoParenteses = analisa_expressao();
         if(strcmp(token_atual.simbolo, "sfecha_parenteses") == 0) {
             for(int i = 0; i<expressaoParenteses.tamanho;i++){
                 insere_lista(expressaoParenteses.operadores[i], lista);
             }
-            lexico(fila);
+            lexico();
         }
         else {
             printf("ERRO analisa_fator: esperado <)>\n");
@@ -919,7 +919,7 @@ void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
     }
     else if(strcmp(token_atual.lexema, "verdadeiro") == 0 || strcmp(token_atual.lexema, "falso") == 0) {
         insere_lista(token_atual,lista);
-        lexico(fila);
+        lexico();
     }
     else {
         printf("%s", token_atual.simbolo);
@@ -928,16 +928,16 @@ void analisa_fator(fila_tokens *fila,ListaOperadores *lista, Pilha* pilhapos) {
     }
 }
 
-void analisa_termo(fila_tokens *fila,ListaOperadores *lista,Pilha* pilhapos) {
-    analisa_fator(fila, lista,pilhapos);
+void analisa_termo(ListaOperadores *lista,Pilha* pilhapos) {
+    analisa_fator( lista,pilhapos);
     while(strcmp(token_atual.simbolo, "smult") == 0 || strcmp(token_atual.simbolo, "sdiv") == 0 || strcmp(token_atual.simbolo, "se") == 0) {
         trataOperadorPos(lista,pilhapos);
-        lexico(fila);
-        analisa_fator(fila,lista,pilhapos);
+        lexico();
+        analisa_fator(lista,pilhapos);
     }
 }
 
-void analisa_expressao_simples(fila_tokens *fila,ListaOperadores* lista, Pilha* pilhapos) {
+void analisa_expressao_simples(ListaOperadores* lista, Pilha* pilhapos) {
     if(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0) {
         //operadores unarios
         strcpy(token_atual.simbolo,"@");
@@ -945,35 +945,35 @@ void analisa_expressao_simples(fila_tokens *fila,ListaOperadores* lista, Pilha* 
             strcpy(token_atual.simbolo,"#");
         }
         trataOperadorPos(lista,pilhapos);
-        lexico(fila);
+        lexico();
     }
-    analisa_termo(fila,lista,pilhapos);
+    analisa_termo(lista,pilhapos);
     while(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0 || strcmp(token_atual.simbolo, "sou") == 0) {
         trataOperadorPos(lista,pilhapos);
-        lexico(fila);
-        analisa_termo(fila,lista,pilhapos);
+        lexico();
+        analisa_termo(lista,pilhapos);
     }
 }
 
-void analisa_comandos(fila_tokens *fila) {
+void analisa_comandos() {
     if(strcmp(token_atual.simbolo, "sinicio") == 0) {
-        lexico(fila);
-        analisa_comando_simples(fila);
+        lexico();
+        analisa_comando_simples();
         while(strcmp(token_atual.simbolo, "sfim") != 0) {
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-                lexico(fila);
+                lexico();
                 if(strcmp(token_atual.simbolo, "sfim") != 0) {
-                    analisa_comando_simples(fila);
+                    analisa_comando_simples();
                 }
             }
             else {
-                imprimir_lista_tokens(fila);
+
                 printf("ERRO analisa_comandos: esperado <;>\n");
                 exit(1);
             }
 
         }
-        lexico(fila);
+        lexico();
     }
     else {
         printf("ERRO analisa_comandos: esperado sinicio\n");
@@ -1024,21 +1024,21 @@ int main() {
     caractere = fgetc(arquivo);
 
     int teste = 0;
-    lexico(&fila);
+    lexico();
 
     rotulo = 1;
 
     if(strcmp(token_atual.simbolo, "sprograma") == 0){
-        lexico(&fila);
+        lexico();
         if(strcmp(token_atual.simbolo, "sidentificador") == 0){
             gera(-1, "START", -1, -1);
             gera(-1,"ALLOC",0,1);
             insere_tabela(token_atual.lexema, "nomedeprograma", "L", 0);
             lexico(&fila);
             if(strcmp(token_atual.simbolo, "sponto_virgula") == 0) {
-                analisa_bloco(&fila);
+                analisa_bloco();
                 if(strcmp(token_atual.simbolo, "sponto") == 0) {
-                    if(lexico(&fila) == 2) {
+                    if(lexico() == 2) {
                         int k = 1;
                         int varContador = 0;
                         int index = 0;
@@ -1082,7 +1082,7 @@ int main() {
     }
 
     while(teste != 2){
-        teste = lexico(&fila);
+        teste = lexico();
     }
 
     if(arquivo_obj != NULL) {
@@ -1091,7 +1091,6 @@ int main() {
     }
 
     fclose(arquivo);
-    imprimir_lista_tokens(&fila);
     imprime_tabela();
     return 0;
 }
