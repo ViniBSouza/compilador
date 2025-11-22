@@ -75,35 +75,12 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
     strcpy(novo->lexema, token_atual.lexema);
     strcpy(novo->tipo, tipo);
     strcpy(novo->escopo, escopo);
-    if(strcmp(tipo,"funcao_booleana") == 0 || strcmp(tipo,"funcao_inteiro") == 0 || strcmp(tipo,"procedimento") == 0){
+    if(strcmp(tipo,"-") == 0  || strcmp(tipo,"procedimento") == 0){
         novo->endereco = rot;
 
     }else{
         novo->endereco = endereco_tabela;
         endereco_tabela++;
-    }
-}
-
-void remove_tabela() {
-    int count = 0;
-    int i = tSimb.tamanho - 1;
-    int enderecoinicial;
-    if(tSimb.tamanho > 0) {
-        while((strcmp(tSimb.simbolos[i].escopo, "L") != 0) && tSimb.tamanho > 0) {
-            enderecoinicial = tSimb.simbolos[i].endereco;
-            count++;
-            tSimb.tamanho--;
-            simbolo *temp = realloc(tSimb.simbolos, tSimb.tamanho * sizeof(simbolo));
-            if(temp != NULL || tSimb.tamanho == 0) {
-                tSimb.simbolos = temp;
-            }
-            i--;
-
-        }
-        gera(-1,"DALLOC",enderecoinicial,count);
-    }
-    else {
-        printf("Tabela de simbolos esta vazia\n");
     }
 }
 
@@ -117,6 +94,42 @@ void imprime_tabela() {
                tSimb.simbolos[i].endereco);
     }
 }
+
+void remove_tabela(char *identificador) {
+
+    int i = 0;
+
+
+    while (i < tSimb.tamanho && strcmp(identificador, tSimb.simbolos[i].lexema) != 0) {
+        i++;
+    }
+    i++;
+
+    int inicio = i;
+
+    while (i < tSimb.tamanho && strcmp(tSimb.simbolos[i].escopo, "L") != 0) {
+        i++;
+    }
+
+    int fim = i; // posição onde para a remoção
+    int count = fim - inicio;
+
+    if (count > 0) {
+        int enderecoinicial = tSimb.simbolos[inicio].endereco;
+        for (int j = fim; j < tSimb.tamanho; j++) {
+            tSimb.simbolos[j - count] = tSimb.simbolos[j];
+        }
+        tSimb.tamanho -= count;
+        tSimb.simbolos = realloc(tSimb.simbolos, tSimb.tamanho * sizeof(simbolo));
+
+        gera(-1, "DALLOC", enderecoinicial, count);
+    }
+
+    //imprime_tabela();
+}
+
+
+
 
 int pesquisa_duplicvar_tabela(const char *lexema) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
@@ -211,14 +224,27 @@ int pesquisa_tabela(const char *lexema, int *ind) {
 int encontra_func(const char *lexema,int *numVariavel, int *primeiroEndereco){
     int i = tSimb.tamanho-1;
     *numVariavel = 0;
-    while(strcmp(tSimb.simbolos[i].escopo,"L" ) != 0 && i >= 0){
-        (*numVariavel)++;
-        *primeiroEndereco = tSimb.simbolos[i].endereco;
-        i--;
+    while (i >= 0 &&
+       (
+        strcmp(tSimb.simbolos[i].lexema, lexema) != 0 ||
+        (
+         strcmp(tSimb.simbolos[i].tipo, "funcao_inteiro") != 0 &&
+         strcmp(tSimb.simbolos[i].tipo, "funcao_booleano") != 0
+        )
+       ))
+        {
+            i--;
+        }
+    int localizacaofuncao = i;
+    i++;
 
+    *primeiroEndereco = tSimb.simbolos[i].endereco;
+    while(i < tSimb.tamanho && strcmp(tSimb.simbolos[i].escopo,"L" ) != 0){
+       (*numVariavel)++;
+        i++;
     }
-    if(strcmp(tSimb.simbolos[i].tipo,"funcao_inteiro") == 0 || strcmp(tSimb.simbolos[i].tipo,"funcao_boleana") == 0){
-        return i;
+    if(i > 0){
+        return localizacaofuncao;
     }
     return -1;
 
@@ -389,11 +415,15 @@ ListaOperadores analisa_expressao() {
         insere_lista(pop(pilhapos),&lista);
     }
 
-    printf("OLHA SO A MINHA EXPRESSAO POSFIXE EBAAAA: \n");
+    /*
+    printf("\nOLHA SO A MINHA EXPRESSAO POSFIXE EBAAAA: \n");
     for(int i = 0; i< lista.tamanho;i++){
         printf("%s",lista.operadores[i].simbolo);
     }
-
+    */
+    while (pilhapos->topo != NULL){
+        pop(pilhapos);  // que deve liberar os nós
+    }
     free(pilhapos);
     return lista;
 }
@@ -413,14 +443,12 @@ void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT,char* lexema){
     if(strcmp(tSimb.simbolos[index].tipo, "funcao_inteiro") == 0) {
         pushTipo(pilhaT,"inteiro");
         gera(-1,"CALL",tSimb.simbolos[index].endereco,-1);
-        gera(-1,"LDV",0,-1);
     }else if(strcmp(tSimb.simbolos[index].tipo,"inteiro") == 0){
         pushTipo(pilhaT,"inteiro");
         gera(-1,"LDV",tSimb.simbolos[index].endereco,-1);
     }else if(strcmp(tSimb.simbolos[index].tipo,"funcao_booleano") == 0){
         pushTipo(pilhaT,"booleano");
         gera(-1,"CALL",tSimb.simbolos[index].endereco,-1);
-        gera(-1,"LDV",0,-1);
     }
     else{
         pushTipo(pilhaT,"booleano");
@@ -438,6 +466,12 @@ char* analisa_tipo_expressao(ListaOperadores lista){
         precedenciaOperador = precedenciaGera(lista.operadores[i].simbolo);
         if(strcmp(lista.operadores[i].simbolo, "sidentificador") == 0){
             verifica_tipo_variavel_funcao(pilhaT, lista.operadores[i].lexema);
+        }else if(strcmp(lista.operadores[i].simbolo, "sverdadeiro") == 0){
+            pushTipo(pilhaT,"booleano");
+            gera(-1,"LDC",1,-1);
+        }else if(strcmp(lista.operadores[i].simbolo, "sfalso") == 0){
+            pushTipo(pilhaT,"booleano");
+            gera(-1,"LDC",0,-1);
         }else if(strcasecmp(lista.operadores[i].simbolo,"snumero") == 0){
             pushTipo(pilhaT,"inteiro");
             gera(-1,"LDC",atoi(lista.operadores[i].lexema),-1);
@@ -466,7 +500,7 @@ char* analisa_tipo_expressao(ListaOperadores lista){
             pushTipo(pilhaT,"booleano");
         }else if(precedenciaOperador == 7){
             tipo = popTipo(pilhaT);
-            if(strcmp(tipo,"intero") != 0 ){
+            if(strcmp(tipo,"inteiro") != 0 ){
                 printf("ERRO %d: esperado um inteiro na expressao para o sinal unario %s ",linha,lista.operadores[i].lexema);
                 exit(1);
             }
@@ -482,14 +516,14 @@ char* analisa_tipo_expressao(ListaOperadores lista){
         }
 
     }
-
+    free(lista.operadores);
     return popTipo(pilhaT);
 }
 
 void analisa_atribuicao(char* ident_proc) {
     ListaOperadores lista;
     char* tipoExpressao;
-    int numVariavel,indexUltimaVariavel;
+    int numVariavel = 0,indexUltimaVariavel = 0;
 
     lexico();
     lista = analisa_expressao();
@@ -498,8 +532,13 @@ void analisa_atribuicao(char* ident_proc) {
 
     int index = encontra_func(ident_proc,&numVariavel,&indexUltimaVariavel);
 
-    if(strcmp(tSimb.simbolos[index].lexema,ident_proc) == 0){
+    if(index > 0 && strcmp(tSimb.simbolos[index].lexema,ident_proc) == 0){
         //Atribuição de retorno
+        if(strcmp(tipoExpressao,"inteiro") == 0){
+            strcpy(tipoExpressao,"funcao_inteiro");
+        }else{
+            strcpy(tipoExpressao,"funcao_booleano");
+        }
         if(strcmp(tSimb.simbolos[index].tipo, tipoExpressao) != 0){
             printf("ERRO Linha %d: Expressao do tipo %s e funcao do tipo %s",linha,tipoExpressao,tSimb.simbolos[index].tipo);
             exit(1);
@@ -752,7 +791,7 @@ void analisa_enquanto() {
         lexico();
         analisa_comando_simples();
         gera(-1, "JMP", auxrot1, -1);
-        gera(auxrot2, NULL, -1, -1);
+        gera(auxrot2, "NULL", -1, -1);
     }
     else {
         printf("ERRO Linha %d: esperado faca apos enquanto\n",linha);
@@ -764,6 +803,8 @@ void analisa_declaracao_procedimento() {
     lexico();
     char nivel[2];
     strcpy(nivel, "L");
+    char nomeProc[50];
+    strcpy(nomeProc,token_atual.lexema);
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         if(pesquisa_declproc_tabela()) {
             insere_tabela(token_atual.lexema, "procedimento", nivel, rotulo);
@@ -787,7 +828,7 @@ void analisa_declaracao_procedimento() {
         printf("ERRO Linha %d: esta faltando um nome valido para o procedimento\n",linha);
         exit(1);
     }
-    remove_tabela();
+    remove_tabela(nomeProc);
     gera(-1, "RETURN", -1, -1); //acho que � aqui
 }
 
@@ -795,10 +836,11 @@ void analisa_declaracao_funcao() {
     lexico();
     char nivel[2];
     strcpy(nivel, "L");
-
+    char nomeProc[50];
+    strcpy(nomeProc,token_atual.lexema);
     if(strcmp(token_atual.simbolo, "sidentificador") == 0) {
         if(pesquisa_declfunc_tabela(token_atual.lexema)) {
-            insere_tabela(token_atual.lexema, "", nivel, rotulo);
+            insere_tabela(token_atual.lexema, "-", nivel, rotulo);
             gera(rotulo,"NULL",-1,-1);
             rotulo++;
             lexico();
@@ -831,7 +873,7 @@ void analisa_declaracao_funcao() {
         printf("ERRO Linha %d: esta faltando o nome da funcao em sua declaracao\n",linha);
         exit(1);
     }
-    remove_tabela();
+    remove_tabela(nomeProc);
     gera(-1, "RETURNF", -1, -1); //acho que � aqui RETURNF????
 }
 
@@ -884,9 +926,8 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
                 if((strcmp(tSimb.simbolos[ind].tipo, "funcao_inteiro") == 0) || (strcmp(tSimb.simbolos[ind].tipo, "funcao_booleano") == 0)) {
                     analisa_chamada_funcao();
                 }
-                else {
-                    lexico();
-                }
+                lexico();
+
         }
         else {
             printf("Erro linha %d: %s nao e nome de funcao ou variavel\n",linha,token_atual.lexema);
@@ -913,11 +954,13 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
             lexico();
         }
         else {
-            printf("ERRO Linha %d: esta faltando ) \n",linha);
+            printf("\n%s\n",token_atual.lexema);
+            printf("\n%s\n",token_atual.simbolo);
+            printf("ERRO Linha %d: esta faltando ')' \n",linha);
             exit(1);
         }
     }
-    else if(strcmp(token_atual.lexema, "verdadeiro") == 0 || strcmp(token_atual.lexema, "falso") == 0) {
+    else if(strcmp(token_atual.simbolo, "sverdadeiro") == 0 || strcmp(token_atual.simbolo, "sfalso") == 0) {
         insere_lista(token_atual,lista);
         lexico();
     }
@@ -940,9 +983,11 @@ void analisa_termo(ListaOperadores *lista,Pilha* pilhapos) {
 void analisa_expressao_simples(ListaOperadores* lista, Pilha* pilhapos) {
     if(strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0) {
         //operadores unarios
-        strcpy(token_atual.simbolo,"@");
+
         if(strcmp(token_atual.simbolo, "smenos") == 0){
             strcpy(token_atual.simbolo,"#");
+        }else{
+             strcpy(token_atual.simbolo,"@");
         }
         trataOperadorPos(lista,pilhapos);
         lexico();
@@ -1090,5 +1135,6 @@ int main() {
     }
 
     fclose(arquivo);
+    free(tSimb.simbolos);
     return 0;
 }

@@ -200,8 +200,10 @@ void executarALLOC(int arg1, int arg2){
         aux = procurarPilha(mDados,arg1+k);
         if(aux != NULL){
             conteudo = aux->data;
+            push(mDados,conteudo,-1);
+        }else{
+            push(mDados,conteudo,arg1+k);
         }
-        push(mDados,conteudo,arg1+k);
     }
 
 }
@@ -213,13 +215,16 @@ void executarDALLOC(int arg1,int arg2){
     int conteudo = 0;
 
     for(k = arg2-1; k >= 0; k--){
-        conteudo = pop(mDados);
+        conteudo = mDados->topo->data;
         aux = procurarPilha(mDados,arg1+k);
         if(aux != NULL){
             aux->data = conteudo;
         }
+        pop(mDados);
 
     }
+
+
 
 }
 
@@ -255,17 +260,20 @@ void executarINV(){
 
 void executarAND(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
     if(conteudo == 1 && mDados->topo->data == 1){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 void executarOR(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
+
     if(conteudo == 1 || mDados->topo->data == 1){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
@@ -276,50 +284,58 @@ void executarNEG(){
 
 void executarCME(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
+
     if(conteudo > mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 void executarCMA(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
+
     if(conteudo < mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 void executarCEQ(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
     if(conteudo == mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 void executarCDIF(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
     if(conteudo != mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 
 void executarCMEQ(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
     if(conteudo >= mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
 void executarCMAQ(){
     int conteudo = pop(mDados);
-    mDados->topo->data = 0;
     if(conteudo <= mDados->topo->data ){
         mDados->topo->data = 1;
+    }else{
+         mDados->topo->data = 0;
     }
 }
 
@@ -346,7 +362,7 @@ void executarPRN(){
     printf("\n%d\n",conteudo);
 
 }
-
+//
 void executarJMP(char* rotulo){
     NoRotulo*rotuloEncontrado = buscaListRot(listaRotulos,rotulo);
     programCounter = rotuloEncontrado->pos;
@@ -373,12 +389,14 @@ void executarCALL(char* rotulo){
 }
 
 void executarRETURN(){
+
      int conteudo = pop(mDados);
-     printf("\n Vou pular para %d\n", conteudo);
+     //printf("\n Vou pular para %d\n", conteudo);
 
      programCounter = conteudo;
      NoInstrucao*instrucaoPulo = buscaListIndex(listaIntrucoes,programCounter);
      instrucaoAtual = instrucaoPulo;
+
 
 }
 
@@ -390,7 +408,7 @@ void executarRETURNF(){
 
 void executar(char *inst, char *rotulo, char* arg1, char* arg2) {
 
-    printf("\n Executando %s", inst);
+    //printf("\n Executando %s", inst);
 
     if(strcmp(inst,"LDC") == 0){
         executarLDC(atoi(arg1));
@@ -511,8 +529,9 @@ int main(int argc, char *argv[]) {
             listaRotulos = listaRotuloAppend(listaRotulos, rotulo, linha);
         }
 
-        printf("ROTULO='%s' CMD='%s' ARG1='%s' ARG2='%s'\n",
-               rotulo, comando, arg1, arg2);
+
+        //printf("ROTULO='%s' CMD='%s' ARG1='%s' ARG2='%s'\n",
+         //      rotulo, comando, arg1, arg2);
 
         listaIntrucoes = listaAppend(listaIntrucoes, rotulo, comando, arg1, arg2);
 
@@ -532,23 +551,26 @@ int main(int argc, char *argv[]) {
             instrucaoAtual = instrucaoAtual->prox;
             programCounter++;
 
-                    No *aux5;
-        aux5 = mDados->topo;
+                   // No *aux5;
+        //aux5 = mDados->topo;
+        /*
         printf("Pilha: \n");
         while(aux5 != NULL){
             printf("\n %d", aux5->data);
             aux5 = aux5->prox;
         }
+        */
 
         }
     }
 
 
 
-
+    /*
     printf("\nExecucao finalizada.\n");
     No *aux;
     aux = mDados->topo;
+
     printf("Pilha: \n");
     while(aux != NULL){
         printf("\n %d", aux->data);
@@ -557,19 +579,26 @@ int main(int argc, char *argv[]) {
 
 
     printf("\nIntrucoes: \n");
-    NoInstrucao *aux1 = listaIntrucoes;
+    */
+    //NoInstrucao *aux1 = listaIntrucoes;
+    /*
     while(aux1 != NULL){
         printf("ROTULO: '%s', CMD: '%s', ARG1: '%s', ARG2: '%s'\n",
            aux1->rotulo, aux1->comando, aux1->arg1, aux1->arg2);
         aux1 = aux1->prox;
     }
 
+
+    */
+
+    /*
     printf("Lista de rotulos:\n");
     NoRotulo *aux2 = listaRotulos;
     while(aux2 != NULL){
         printf("\n %s", aux2->rotulo);
         aux2 = aux2->prox;
     }
+    */
     return 0;
 
 }
