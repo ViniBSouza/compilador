@@ -71,22 +71,16 @@ void pushTipo(PilhaTipo* p, const char* tipo) {
 
 
 char* popTipo(PilhaTipo* p) {
-    if (p->topo == NULL) {
-        printf("Pilha de tipos vazia!\n");
-        return NULL;
-    }
+    if (!p->topo) return NULL;
 
     NoTipo* tmp = p->topo;
-
-    // copia string
-    char* tipo = strdup(tmp->tipo);
-
-    // atualiza topo
     p->topo = tmp->prox;
 
-    free(tmp);
+    char* retorno = malloc(50);
+    strcpy(retorno, tmp->tipo);
 
-    return tipo;
+    free(tmp);
+    return retorno;
 }
 
 

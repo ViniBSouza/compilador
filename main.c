@@ -1050,6 +1050,7 @@ void analisa_comandos() {
         }
         lexico();
     } else {
+        printf("%s", token_atual.lexema);
         printf("ERRO Linha %d: esta faltando inicio apos comando\n", linha);
         exit(1);
     }

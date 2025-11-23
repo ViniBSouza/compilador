@@ -11,7 +11,6 @@ struct no
 };
 typedef struct no No;
 
-
 struct noRotulo
 {
     char rotulo[8];
@@ -391,7 +390,6 @@ void executarCALL(char* rotulo){
 void executarRETURN(){
 
      int conteudo = pop(mDados);
-     //printf("\n Vou pular para %d\n", conteudo);
 
      programCounter = conteudo;
      NoInstrucao*instrucaoPulo = buscaListIndex(listaIntrucoes,programCounter);

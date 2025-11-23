@@ -5,8 +5,6 @@
 #include "lexico.h"
 
 
-
-
 typedef struct noOperador {
     token t;
     struct noOperador* prox;
