@@ -5,7 +5,7 @@ a = Analysis(
     ['guicompilador.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('compilador.exe', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

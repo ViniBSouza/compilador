@@ -14,7 +14,7 @@ else:
 class VMGui:
     def __init__(self, root):
         self.root = root
-        self.root.title("Máquina Virtual - GUI Step")
+        self.root.title("Máquina Virtual")
 
         self.proc = None
         self.thread = None
@@ -183,13 +183,18 @@ class VMGui:
             args.append("2")
 
         try:
+            creation = 0
+            if os.name == "nt":
+                creation = subprocess.CREATE_NO_WINDOW
+
             self.proc = subprocess.Popen(
                 args,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1
+                bufsize=1,
+                creationflags=creation   # <-- ESTA LINHA
             )
         except Exception as e:
             messagebox.showerror("Erro ao iniciar VM", str(e))

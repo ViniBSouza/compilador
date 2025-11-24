@@ -808,10 +808,8 @@ void analisa_se() {
         gera(auxrot, "NULL", -1, -1);
         auxrot2 = rotulo;
         rotulo++;
-        printf("\n%s\n",token_atual.lexema);
         if (strcmp(token_atual.simbolo, "ssenao") == 0) {
             lexico();
-            printf("\n%s\n",token_atual.lexema);
             analisa_comando_simples();
         }
     } else {
@@ -992,8 +990,6 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
             if (expressaoParenteses.operadores) free(expressaoParenteses.operadores);
             lexico();
         } else {
-            printf("\n%s\n", token_atual.lexema);
-            printf("\n%s\n", token_atual.simbolo);
             printf("ERRO Linha %d: esta faltando ')' \n", linha);
             if (expressaoParenteses.operadores) free(expressaoParenteses.operadores);
             exit(1);
@@ -1002,7 +998,6 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
         insere_lista(token_atual, lista);
         lexico();
     } else {
-        printf("%s", token_atual.simbolo);
         printf("ERRO Linha %d: %s nao e valido na expressao\n", linha, token_atual.lexema);
         exit(1);
     }
