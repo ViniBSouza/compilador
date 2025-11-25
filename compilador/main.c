@@ -716,7 +716,6 @@ void analisa_leia() {
                     }
             }
             else if(index != -1){
-                printf("lexema atual: %s", token_atual.lexema);
                 printf("Erro Linha %d: leia nao aceita variavel do tipo %s\n",linha, tSimb.simbolos[index].tipo);
                 exit(1);
             }
