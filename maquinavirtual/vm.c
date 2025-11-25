@@ -992,13 +992,13 @@ int main(int argc, char *argv[]) {
         if (modo == 0) {
             while (executarInstrucao()) {
             }
-        } else if (modo == 1) {
+        } else if (modo == 1) { //Execução step para console
             while (executarInstrucao()) {
                 printf("[WAIT]\n");
                 fflush(stdout);
                 getchar();
             }
-        } else if (modo == 2) {
+        } else if (modo == 2) { //Execução step para interface gráfica
             while (executarInstrucao()) {
                 printf("[STEP]\n");
                 fflush(stdout);
