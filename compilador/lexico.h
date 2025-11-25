@@ -3,27 +3,29 @@
 
 #include <stdio.h>
 
+/* Estrutura de um token */
 typedef struct {
     char lexema[50];
     char simbolo[50];
 } token;
 
+/* Estrutura de um nó de token */
 typedef struct no {
     token t;
     struct no *prox;
 } no;
 
-
+/* Estrutura da fila de tokens */
 typedef struct {
     no *frente;
     no *tras;
 } fila_tokens;
 
+/* Estrutura da lista de operadores para gerar expressão pós-fixa*/
 typedef struct {
     token* operadores;
     int tamanho;
 } ListaOperadores;
-
 
 extern token token_atual;
 extern FILE *arquivo;
@@ -43,6 +45,5 @@ void trata_pontuacao();
 void pega_token();
 int lexico();
 void insere_lista(token novoToken, ListaOperadores* lista);
-
 
 #endif

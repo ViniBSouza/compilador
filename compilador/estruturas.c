@@ -4,13 +4,14 @@
 #include "estruturas.h"
 #include "lexico.h"
 
-
+/* Pilha auxiliar para converter expressões infixas para pós-fixas*/
 Pilha* criaPilha() {
     Pilha* p = (Pilha*)malloc(sizeof(Pilha));
     p->topo = NULL;
     return p;
 }
 
+/* Função de empilhar token*/
 void push(Pilha* p, token t) {
     NoOperador* novo = (NoOperador*)malloc(sizeof(NoOperador));
     if (!novo) {
@@ -25,7 +26,7 @@ void push(Pilha* p, token t) {
     p->topo = novo;
 }
 
-
+/* Função de desempilhar token, retornando seu valor*/
 token pop(Pilha* p) {
     token vazio = {"", ""};
 
@@ -43,8 +44,7 @@ token pop(Pilha* p) {
     return t;
 }
 
-
-
+/* Pilha auxiliar para verificar tipos das expressões pós-fixas*/
 PilhaTipo* criaPilhaTipo() {
     PilhaTipo* p = (PilhaTipo*) malloc(sizeof(PilhaTipo));
     if (!p) {
@@ -56,7 +56,7 @@ PilhaTipo* criaPilhaTipo() {
     return p;
 }
 
-
+/* Função de empilhar tipo*/
 void pushTipo(PilhaTipo* p, const char* tipo) {
     NoTipo* novo = (NoTipo*) malloc(sizeof(NoTipo));
     if (!novo) {
@@ -69,7 +69,7 @@ void pushTipo(PilhaTipo* p, const char* tipo) {
     p->topo = novo;
 }
 
-
+/* Função de desempilhar tipo, retornando tipo do lexema desempilhado */
 char* popTipo(PilhaTipo* p) {
     if (!p->topo) return NULL;
 

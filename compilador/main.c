@@ -1,4 +1,15 @@
-/* main.c - versão corrigida para evitar heap corruption e acessos fora de bounds */
+/*  Nome: Compilador Simplificado Didático
+    Autores: Augusto Morato, Matheus Anitelli, Vinícius Barbosa e Vinicius Henrique
+    Data: 24/11/2025
+
+    Descrição: Desenvolvimento de um compilador simplificado didático (CSD) para uma linguagem simplificada
+    (LPD - Linguagem de Programação Didática).
+
+    Dependências: estruturas.c
+                  estruturas.h
+                  lexico.c
+                  lexico.h
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +18,7 @@
 #include "lexico.h"
 #include "estruturas.h"
 
+/* Estrutura de um simbolo na tabela de simbolos */
 typedef struct {
     char lexema[50];
     char escopo[2];
@@ -14,16 +26,21 @@ typedef struct {
     int endereco;
 } simbolo;
 
+/* Estrutura de lista da tabela de símbolos */
 typedef struct {
     simbolo *simbolos;
-    int tamanho;
+    int tamanho;    // tamanho total da lista funcionando como um vetor da tabela de simbolos
 } tabela_simbolos;
 
+/* Inicialização de variáveis da tabela de símbolos, endereço inicial da tabela e rótulo */
 tabela_simbolos tSimb = {NULL, 0};
 int endereco_tabela = 0;
-int endereco_mvd = 1;
 int rotulo = 0;
 
+/* Endereço inicial da máquina virtual, visto que endereço [0] é reservado para o retorno de funções */
+int endereco_mvd = 1;
+
+/* Declaração de protótipos de funções sintáticas que realizam recursividade*/
 void analisa_comandos();
 void analisa_comando_simples();
 void analisa_expressao_simples(ListaOperadores *lista, Pilha *pilhapos);
@@ -33,8 +50,7 @@ void analisa_declaracao_procedimento();
 void analisa_subrotinas();
 void analisa_bloco();
 
-/* ------------------------- Funções utilitárias seguras ------------------------- */
-
+/* Funções utilitárias seguras para realocação de memória*/
 static void *safe_realloc(void *ptr, size_t nmemb, size_t size) {
     if (nmemb == 0) {
         free(ptr);
@@ -43,13 +59,13 @@ static void *safe_realloc(void *ptr, size_t nmemb, size_t size) {
     void *tmp = realloc(ptr, nmemb * size);
     if (tmp == NULL) {
         fprintf(stderr, "Erro: realocacao falhou\n");
-        free(ptr); /* liberar original para evitar leak (programa vai morrer) */
+        free(ptr); /* liberar original para evitar leak */
         exit(1);
     }
     return tmp;
 }
 
-/* Função para liberar possíveis restos em PilhaTipo */
+/* Liberar possíveis restos em PilhaTipo */
 static void liberaPilhaTipoRestante(PilhaTipo *p) {
     if (!p) return;
     while (p->topo != NULL) {
@@ -59,14 +75,14 @@ static void liberaPilhaTipoRestante(PilhaTipo *p) {
     free(p);
 }
 
-/* ------------------------- Geração de código (sem mudança) ------------------------- */
-
+/* Função para geração de código */
 void gera(int rot, const char *arg1, int arg2, int arg3) {
     if (arquivo_obj == NULL) {
         printf("Erro: arquivo .obj nao foi aberto\n");
         return;
     }
 
+    // -1 sinaliza que o argumento não deve ser impresso
     if (rot >= 0)
         fprintf(arquivo_obj, "%-4d", rot);
     else
@@ -85,8 +101,11 @@ void gera(int rot, const char *arg1, int arg2, int arg3) {
         fprintf(arquivo_obj, "    \n");
 }
 
-/* ------------------------- Tabela de simbolos (corrigida) ------------------------- */
+/* ------------------------- Tabela de simbolos ------------------------- */
+/* A tabela de símbolos armazena 4 parâmetros para cada símbolo:
+   nome, tipo, escopo (sendo este a marca L ou vazio) e endereço na tabela*/
 
+/* Inserção de símbolo na tabela de símbolos*/
 void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int rot) {
     /* realloc seguro usando temp */
     int novo_tamanho = tSimb.tamanho + 1;
@@ -95,7 +114,7 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
     tSimb.tamanho = novo_tamanho;
 
     simbolo *novo = &tSimb.simbolos[tSimb.tamanho - 1];
-    /* usar o lexema passado (antes estava usando token_atual.lexema) */
+    /* usa o lexema passado */
     strncpy(novo->lexema, lexema, sizeof(novo->lexema) - 1);
     novo->lexema[sizeof(novo->lexema) - 1] = '\0';
 
@@ -114,6 +133,7 @@ void insere_tabela(const char *lexema, const char *tipo, const char *escopo, int
     }
 }
 
+/* Impressão de tabela para debugs */
 void imprime_tabela() {
     printf("\n--- Tabela de Simbolos ---\n");
     for (int i = 0; i < tSimb.tamanho; i++) {
@@ -125,7 +145,7 @@ void imprime_tabela() {
     }
 }
 
-/* remove_tabela: corrigido para evitar reads fora do array e realloc inseguro */
+/* Remoção de um símbolo da tabela */
 void remove_tabela(char *identificador) {
     if (tSimb.tamanho == 0) return;
 
@@ -135,14 +155,14 @@ void remove_tabela(char *identificador) {
     }
 
     if (i >= tSimb.tamanho) {
-        /* identificador nao encontrado -> nada a remover */
+        /* Identificador nao encontrado, nada a remover */
         return;
     }
 
-    int inicio = i + 1; /* início dos símbolos locais associados ao identificador */
+    int inicio = i + 1; /* Início dos símbolos locais associados ao identificador */
 
     if (inicio >= tSimb.tamanho) {
-        /* nada para remover (não existem símbolos após o identificador) */
+        /* Nada para remover (não existem símbolos após o identificador) */
         return;
     }
 
@@ -171,48 +191,48 @@ void remove_tabela(char *identificador) {
     }
 }
 
-/* ------------------------- Funções de pesquisa (corrigidas) ------------------------- */
-
+/* Pesquisa se nome de variável é duplicada na tabela */
 int pesquisa_duplicvar_tabela(const char *lexema) {
-    for (int i = tSimb.tamanho - 1; i >= 0; i--) {
-        if (strcmp(tSimb.simbolos[i].escopo, "L") == 0) {
+    for (int i = tSimb.tamanho - 1; i >= 0; i--) {  // Percorre do final para o início, funcionando como uma pilha
+        if (strcmp(tSimb.simbolos[i].escopo, "L") == 0) {   // Se atingiu a marca, fim da pesquisa, variável não é duplicada
             return 0;
         }
-        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
+        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {    // Se lexema atual for encontrado, variável é duplicada
             return 1;
         }
     }
     return 0;
 }
-
+/* Pesquisa se nome de função é duplicada na tabela */
 int pesquisa_duplicfunc_tabela(const char *lexema) {
     for (int i = tSimb.tamanho - 1; i >= 0; i--) {
-        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
+        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {    //Se lexema atual for encontrado, função é duplicada
             return 0;
         }
     }
     return 1;
 }
 
+/* Pesquisa se variável ou função foram declaradas na tabela */
 int pesquisa_declvarfunc_tabela(const char *lexema) {
-    /* Corrigido: verificar igualdade com 0 (strcmp == 0) e limites do loop */
     for (int i = 0; i < tSimb.tamanho; i++) {
-        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
+        if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {    //verifica se o lexema da variável atual é do tipo inteiro ou booleano
             if (strcmp(tSimb.simbolos[i].tipo, "inteiro") == 0 || strcmp(tSimb.simbolos[i].tipo, "booleano") == 0) {
                 return 1;
             }
-            if (strcmp(tSimb.simbolos[i].tipo, "funcao_inteiro") == 0 || strcmp(tSimb.simbolos[i].tipo, "funcao_booleano") == 0) {
+            if (strcmp(tSimb.simbolos[i].tipo, "funcao_inteiro") == 0 ||
+                strcmp(tSimb.simbolos[i].tipo, "funcao_booleano") == 0) { //verifica se o lexema da função atual é do tipo inteiro ou booleano
                 return 1;
             }
-            printf("ERRO Linha %d: variavel ou funcao %s nao declarada", linha, lexema);
+            printf("ERRO Linha %d: variavel ou funcao %s nao declarada\n", linha, lexema);
             exit(1);
         }
     }
     return 0;
 }
 
-void coloca_tipo_tabela(const char *lexema, int qtdVar) {
-    /* o código original usava token_atual.lexema, mantive com token_atual para preservar lógica */
+/* Insere tipo do símbolo na tabela */
+void coloca_tipo_tabela(const char *lexema, int qtdVar) {   //recebe contador de quantas variáveis foram declaradas para inseri-las na tabela
     if (strcmp(token_atual.lexema, "inteiro") == 0) {
         for (int i = 0; i < qtdVar; i++) {
             strncpy(tSimb.simbolos[tSimb.tamanho - i - 1].tipo, "inteiro", sizeof(tSimb.simbolos[0].tipo) - 1);
@@ -226,19 +246,21 @@ void coloca_tipo_tabela(const char *lexema, int qtdVar) {
     }
 }
 
+/* Pesquisa se variável foi declarada na tabela */
 int pesquisa_declvar_tabela(const char *lexema) {
     for (int i = tSimb.tamanho - 1; i >= 0; i--) {
         if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
             if (strcmp(tSimb.simbolos[i].tipo, "inteiro") == 0 || strcmp(tSimb.simbolos[i].tipo, "booleano") == 0) {
                 return i;
             }
-            printf("ERRO %d: variavel %s nao declarada", linha, lexema);
+            printf("Erro Linha %d: variavel %s nao declarada\n", linha, lexema);
             exit(1);
         }
     }
     return -1;
 }
 
+/* Pesquisa se procedimento foi declarado na tabela*/
 int pesquisa_declproc_tabela() {
     for (int i = tSimb.tamanho - 1; i >= 0; i--) {
         if (strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
@@ -250,16 +272,18 @@ int pesquisa_declproc_tabela() {
     return 1;
 }
 
+/* Procura simbolo na tabela, retornando o índice e se existe ou não na tabela*/
 int pesquisa_tabela(const char *lexema, int *ind) {
     for (int i = tSimb.tamanho - 1; i >= 0; i--) {
         if (strcmp(lexema, tSimb.simbolos[i].lexema) == 0) {
             *ind = i;
-            return 1;
+            return 1; // simbolo existe
         }
     }
-    return 0;
+    return 0;   // simbolo não existe
 }
 
+/* Procura função na tabela de símbolos */
 int encontra_func(const char *lexema, int *numVariavel, int *primeiroEndereco) {
     int i = tSimb.tamanho - 1;
     *numVariavel = 0;
@@ -287,33 +311,30 @@ int encontra_func(const char *lexema, int *numVariavel, int *primeiroEndereco) {
     return localizacaofuncao;
 }
 
+/* Pesquisa se nome de função já existe na tabela, percorrendo ela inteira */
 int pesquisa_declfunc_tabela() {
     for (int i = tSimb.tamanho - 1; i >= 0; i--) {
         if (strcmp(token_atual.lexema, tSimb.simbolos[i].lexema) == 0) {
             printf("Erro Linha %d: ja existe uma variavel/funcao/procedimento com o nome %s\n", linha, token_atual.lexema);
             exit(1);
-            return 0;
+            return 0;   // Nome já existe
         }
     }
-    return 1;
+    return 1;   // Nome não existe
 }
 void analisa_chamada_funcao() {
-    /* pesquisa_declvarfunc_tabela(token_atual.lexema);
-    printf("oi sou o %s\n", token_atual.lexema);
-    lexico(fila);
-    */
 }
 
+/* Verifica se o procedimento existe quando for chamado */
 int analisa_chamada_procedimento(char *ident_proc) {
     for(int i = tSimb.tamanho - 1; i >= 0; i--) {
         if(strcmp(ident_proc, tSimb.simbolos[i].lexema) == 0) {
             if(strcmp(tSimb.simbolos[i].tipo, "procedimento") == 0) {
-                //printf("%s", tSimb.simbolos[i].lexema);
                 gera(-1,"CALL",tSimb.simbolos[i].endereco,-1);
-                return 0; //verdadeiro: proc existe
+                return 0; // procedimento existe
             }
             else {
-                return 1;
+                return 1; //procedimento não existe
             }
         }
     }
@@ -322,11 +343,8 @@ int analisa_chamada_procedimento(char *ident_proc) {
     return 1;
 }
 
-
-/* ------------------------- Parsing / análise (com pequenas correções) ------------------------- */
-
-/* precedenciaGera / precedencia / verificaPrecedencia mantidas (sem alterar lógica) */
-
+/* ------------------------- Expressões pós-fixas ------------------------- */
+/* Verificação de operador para geração de código de expressões */
 int precedenciaGera(char* operador){
     if((strcmp(operador, "sou") == 0)){
         gera(-1,"OR",-1,-1);
@@ -376,6 +394,15 @@ int precedenciaGera(char* operador){
     return 8;
 }
 
+/* Verificação de precendência para geração de expressão pós-fixa
+
+    Ordem de precedência (do maior para o menor):
+
+    Aritméticos: (+ positivo, - negativo) (*,div) (+,-)
+    Relacionais: (todos iguais)
+    Lógicos:     (não) (e) (ou)
+
+*/
 int precedencia(char* operador){
     if((strcmp(operador, "sou") == 0)){
         return 0;
@@ -411,16 +438,18 @@ int precedencia(char* operador){
     return 8;
 }
 
+/* Comparador de operadores para verificar precedência */
 int verificaPrecedencia(char* operador1, char* operador2){
-    if(precedencia(operador1) <= precedencia(operador2)){
+    if(precedencia(operador1) <= precedencia(operador2)){   // De forma hierárquica, verifica precedência de operadores
         return 1;
     }
     return 0;
 }
 
-/* trataOperadorPos mantida (usa push/pop da pilha implementada em estruturas.c) */
+/* Insere operador na pilha auxiliar para gerar expressões pós-fixas na lista */
 void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
     NoOperador* aux = pilhapos->topo;
+
     while (pilhapos->topo != NULL && strcmp(aux->t.simbolo, "sabre_parenteses") != 0 && verificaPrecedencia(token_atual.simbolo, aux->t.simbolo)) {
         insere_lista(pop(pilhapos), lista);
         aux = pilhapos->topo;
@@ -428,7 +457,7 @@ void trataOperadorPos(ListaOperadores* lista, Pilha* pilhapos){
     push(pilhapos, token_atual);
 }
 
-/* analisa_expressao: garante que não acessamos elementos fora de bounds */
+/* Gera lista da expressão convertida para pós-fixa */
 ListaOperadores analisa_expressao() {
     Pilha *pilhapos = criaPilha();
     ListaOperadores lista;
@@ -448,27 +477,22 @@ ListaOperadores analisa_expressao() {
         insere_lista(pop(pilhapos), &lista);
     }
 
-    /* debug print - pode remover depois */
-    /*
-    printf("\nOLHA SO A MINHA EXPRESSAO POSFIXE EBAAAA: \n");
-    for (int i = 0; i < lista.tamanho; i++) {
-        printf("%s", lista.operadores[i].lexema);
-    }
-
-    */
-    /* pilha já está vazia (nodes liberados por pop), liberar a estrutura */
+    /* Pilha já está vazia, liberando a estrutura */
     free(pilhapos);
     return lista;
 }
 
-/* verifica_tipo_variavel_funcao mantida (gera instruções e empilha tipos) */
+/* Verifica tipo da variável ou função e empilha na pilha de tipos */
 void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT, char* lexema){
     int index;
+
+    /* Verifica se nome de variável ou função já foi declarada */
     if (!pesquisa_tabela(lexema, &index)) {
         printf("ERRO Linha %d: variavel/funcao nao declarada (%s)\n", linha, lexema);
         exit(1);
     }
 
+    /* Valida se variável não está com nome de programa ou de procedimento */
     if (strcmp(tSimb.simbolos[index].tipo, "nomedeprograma") == 0 || strcmp(tSimb.simbolos[index].tipo, "procedimento") == 0) {
         printf("ERRO Linha: %d: %s nao eh variavel/funcao\n", linha, lexema);
         exit(1);
@@ -488,12 +512,23 @@ void verifica_tipo_variavel_funcao(PilhaTipo *pilhaT, char* lexema){
     }
 }
 
-/* analisa_tipo_expressao: libera pilha de tipos corretamente e retorna string alocada */
+/* Analisa o tipo da expressão, validando-a */
+
+/*  Tabela de tipos:
+    Aritméticos:    * div + - (I+I => I)
+                    -u +u (I => I)
+
+    Relacionais:    todos (I+I => B)
+    Lógicos:        e ou (B+B => B)
+                    nao (B => B)
+*/
 char* analisa_tipo_expressao(ListaOperadores lista) {
     PilhaTipo* pilhaT = criaPilhaTipo();
     char* tipo = NULL;
     int j;
     int precedenciaOperador;
+
+    // Percorre lista contendo a expressão pós-fixa
     for (int i = 0; i < lista.tamanho; i++) {
         precedenciaOperador = precedenciaGera(lista.operadores[i].simbolo);
         if (strcmp(lista.operadores[i].simbolo, "sidentificador") == 0) {
@@ -570,10 +605,31 @@ char* analisa_tipo_expressao(ListaOperadores lista) {
     /* Pop final e liberar pilha */
     char *resultado = popTipo(pilhaT);
     liberaPilhaTipoRestante(pilhaT); /* limpa o que restou e free(pilha) */
-    return resultado; /* notem: o chamador deve free() essa string quando terminar */
+
+    return resultado;
 }
 
-/* analisa_atribuicao — libera tipoExpressao após uso */
+/* ------------------------- Analisador Sintático ------------------------- */
+/* NÚMEROS E IDENTIFICADORES
+    <identificador> ::= <letra> {<letra> | <dígito> | _ }
+    <número> ::= <dígito> {<dígito>}
+    <dígito> ::= (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
+    <letra> ::= (a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|
+     A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)
+
+   COMENTÁRIOS
+    Uma vez que os comentários servem apenas como documentação do código fonte, ao realizar
+    a compilação do código faz-se necessário eliminar todo o conteúdo entre seus
+    delimitadores.
+    delimitadores : { }
+
+*/
+
+/* Analisa lexema de atribuição (:=)
+
+    <comando atribuicao>::= <identificador> := <expressão>
+
+*/
 void analisa_atribuicao(char* ident_proc) {
     ListaOperadores lista;
     char* tipoExpressao;
@@ -619,9 +675,11 @@ void analisa_atribuicao(char* ident_proc) {
     free(tipoExpressao);
 }
 
-/* analisa_tipo mantida */
+/* Analisa o tipo da variável e insere o tipo na tabela de símbolos
 
+    <tipo> ::= (inteiro | booleano)
 
+*/
 void analisa_tipo(int qtdVar) {
     if(strcmp(token_atual.simbolo, "sinteiro") != 0 && strcmp(token_atual.simbolo, "sbooleano") != 0) {
         printf("ERRO Linha %d: tipo de variavel invalida\n",linha);
@@ -633,9 +691,12 @@ void analisa_tipo(int qtdVar) {
     }
 }
 
+/* Valida a função leia() da linguagem, que lê o dígito inserido pelo usuário e o armazena na variável
 
+    <comando leitura> ::= leia ( <identificador> )
+
+*/
 void analisa_leia() {
-
     lexico();
     if(strcmp(token_atual.simbolo, "sabre_parenteses") == 0) {
         lexico();
@@ -675,6 +736,11 @@ void analisa_leia() {
     }
 }
 
+/* Valida a função escreva() da linguagem, que imprime na tela o valor da variável do tipo inteiro
+
+    <comando escrita> ::= escreva ( <identificador> )
+
+*/
 void analisa_escreva() {
 
     lexico();
@@ -714,15 +780,17 @@ void analisa_escreva() {
     }
 }
 
+/* Valida a declaração de variáveis
 
-/* analisa_leia e analisa_escreva mantidas (sem mudanças semânticas) */
+    <declaração de variáveis>::= <identificador> {, <identificador>} : <tipo>
 
+*/
 void analisa_variaveis() {
-    int qtdVar = 0;
+    int qtdVar = 0;     // contador de variáveis declaradas
     while (strcmp(token_atual.simbolo, "sdoispontos") != 0) {
         if (strcmp(token_atual.simbolo, "sidentificador") == 0) {
             qtdVar++;
-            if (!pesquisa_duplicvar_tabela(token_atual.lexema)) { /* 1 eh verdadeiro */
+            if (!pesquisa_duplicvar_tabela(token_atual.lexema)) { /* 1 é verdadeiro */
                 insere_tabela(token_atual.lexema, "variavel", "", 0);
                 lexico();
                 if (strcmp(token_atual.simbolo, "svirgula") == 0 || strcmp(token_atual.simbolo, "sdoispontos") == 0) {
@@ -752,6 +820,12 @@ void analisa_variaveis() {
     endereco_mvd = endereco_mvd + qtdVar;
 }
 
+/* Valida a etapa de declaração de variáveis
+
+<etapa de declaração de variáveis>::= var <declaração de variáveis> ;
+                                         {<declaração de variáveis>;}
+
+*/
 void analisa_et_variaveis() {
     if (strcmp(token_atual.simbolo, "svar") == 0) {
         lexico();
@@ -772,6 +846,11 @@ void analisa_et_variaveis() {
     }
 }
 
+/* Valida atribuição ou chamada de procedimento
+
+    <atribuição_chprocedimento>::= (<comando atribuicao>|<chamada de procedimento>)
+
+*/
 void analisa_atrib_chprocedimento() {
     char ident_proc[50];
     strncpy(ident_proc, token_atual.lexema, sizeof(ident_proc) - 1);
@@ -784,6 +863,12 @@ void analisa_atrib_chprocedimento() {
     }
 }
 
+/* Valida comando condicional da linguagem
+
+    <comando condicional>::= se <expressão>
+        entao <comando>
+    [senao <comando>]
+*/
 void analisa_se() {
     int auxrot = rotulo;
     int auxrot2;
@@ -819,6 +904,11 @@ void analisa_se() {
     gera(auxrot2, "NULL", -1, -1);
 }
 
+/* Valida comando enquanto da linguagem
+
+    <comando enquanto> ::= enquanto <expressão> faca <comando>
+
+*/
 void analisa_enquanto() {
     int auxrot1, auxrot2;
 
@@ -851,6 +941,12 @@ void analisa_enquanto() {
     }
 }
 
+/* Valida declaração de procedimento
+
+        procedimento <identificador>;
+        <bloco>
+
+*/
 void analisa_declaracao_procedimento() {
     lexico();
     char nivel[2] = "L";
@@ -881,6 +977,12 @@ void analisa_declaracao_procedimento() {
     gera(-1, "RETURN", -1, -1);
 }
 
+/* Valida declaração de função
+
+    <declaração de função> ::= funcao <identificador>: <tipo>;
+                                <bloco>
+
+*/
 void analisa_declaracao_funcao() {
     lexico();
     char nivel[2] = "L";
@@ -922,6 +1024,14 @@ void analisa_declaracao_funcao() {
     gera(-1, "RETURNF", -1, -1);
 }
 
+/* Valida etapa de declaração de sub-rotinas
+
+    <etapa de declaração de sub-rotinas> ::= (<declaração de procedimento>;|
+                                                <declaração de função>;)
+                                             {<declaração de procedimento>;|
+                                                <declaração de função>;}
+
+*/
 void analisa_subrotinas() {
     int auxrot;
     int flag = 0;
@@ -953,6 +1063,12 @@ void analisa_subrotinas() {
     }
 }
 
+/* Valida bloco
+
+    <bloco>::= [<etapa de declaração de variáveis>]
+               [<etapa de declaração de sub-rotinas>]
+                <comandos>
+*/
 void analisa_bloco() {
     lexico();
     analisa_et_variaveis();
@@ -960,6 +1076,15 @@ void analisa_bloco() {
     analisa_comandos();
 }
 
+/* Valida fator
+
+    <fator> ::= (<variável> |
+                 <número> |
+                 <chamada de função> |
+                 (<expressão>) | verdadeiro | falso |
+                 nao <fator>)
+
+*/
 void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
     int ind;
     if (strcmp(token_atual.simbolo, "sidentificador") == 0) {
@@ -1003,6 +1128,11 @@ void analisa_fator(ListaOperadores *lista, Pilha* pilhapos) {
     }
 }
 
+/* Valida termo
+
+    <termo>::= <fator> {(* | div | e) <fator>}
+
+*/
 void analisa_termo(ListaOperadores *lista, Pilha* pilhapos) {
     analisa_fator(lista, pilhapos);
     while (strcmp(token_atual.simbolo, "smult") == 0 || strcmp(token_atual.simbolo, "sdiv") == 0 || strcmp(token_atual.simbolo, "se") == 0) {
@@ -1012,6 +1142,11 @@ void analisa_termo(ListaOperadores *lista, Pilha* pilhapos) {
     }
 }
 
+/* Valida expressão simples
+
+    <expressão simples> ::= [ + | - ] <termo> {( + | - | ou) <termo> }
+
+*/
 void analisa_expressao_simples(ListaOperadores* lista, Pilha* pilhapos) {
     if (strcmp(token_atual.simbolo, "smais") == 0 || strcmp(token_atual.simbolo, "smenos") == 0) {
         if (strcmp(token_atual.simbolo, "smenos") == 0) {
@@ -1030,6 +1165,13 @@ void analisa_expressao_simples(ListaOperadores* lista, Pilha* pilhapos) {
     }
 }
 
+/* Valida comandos
+
+    <comandos>::= inicio
+                    <comando>{;<comando>}[;]
+                  fim
+
+*/
 void analisa_comandos() {
     if (strcmp(token_atual.simbolo, "sinicio") == 0) {
         lexico();
@@ -1053,6 +1195,16 @@ void analisa_comandos() {
     }
 }
 
+/* Valida comando simples
+
+    <comando>::= (<atribuição_chprocedimento>|
+                  <comando condicional> |
+                  <comando enquanto> |
+                  <comando leitura> |
+                  <comando escrita> |
+                  <comandos>)
+
+*/
 void analisa_comando_simples(fila_tokens *fila) {
     if (strcmp(token_atual.simbolo, "sidentificador") == 0) {
         analisa_atrib_chprocedimento(fila);
@@ -1069,36 +1221,34 @@ void analisa_comando_simples(fila_tokens *fila) {
     }
 }
 
-/* -------------------------------------- main -------------------------------------- */
-
+/* -------------------------------------- Função principal -------------------------------------- */
 
 int main(int argc, char *argv[]) {
     fila_tokens fila = {NULL, NULL};
-
 
     if (argc < 2) {
         printf("Uso: %s arquivo.txt\n", argv[0]);
         return 1;
     }
 
-    arquivo = fopen(argv[1], "r");
+    arquivo = fopen(argv[1], "r");  // arquivo é a variável contendo o código da linguagem de programação didática
     if (!arquivo) {
         printf("Erro ao abrir arquivo %s\n", argv[1]);
         return 1;
     }
 
-    // Para gerar arquivo objeto, só troca extensão:
     char saida[200];
     snprintf(saida, sizeof(saida), "%s.obj", argv[1]);
-    arquivo_obj = fopen(saida, "w");
+    arquivo_obj = fopen(saida, "w");    // arquivo_obj é a variável do código objeto que será gerado pelo compilador
 
     if (!arquivo_obj) {
         printf("Erro ao criar arquivo objeto.\n");
         return 1;
     }
+
     caractere = fgetc(arquivo);
     int teste = 0;
-    lexico(); /* preenche token_atual */
+    lexico(); // leitura de token_atual
 
     rotulo = 1;
 
@@ -1113,7 +1263,6 @@ int main(int argc, char *argv[]) {
                 analisa_bloco();
                 if (strcmp(token_atual.simbolo, "sponto") == 0) {
                     if (lexico() == 2) {
-                        /* corrigido: proteger acesso a tSimb.simbolos[k] (k=1) */
                         int k = 1;
                         int varContador = 0;
                         int index = 0;

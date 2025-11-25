@@ -4,17 +4,13 @@
 #include <ctype.h>
 #include "lexico.h"
 
-
-
 token token_atual;
 FILE *arquivo = NULL;
 FILE *arquivo_obj = NULL;
 int caractere;
-int linha = 1;
+int linha = 1;  // contador de linhas do programa
 
-
-
-
+/* Inserção de token na lista de tokens */
 void insere_lista(token novoToken, ListaOperadores* lista) {
 
     // Aumenta o tamanho
@@ -34,11 +30,7 @@ void insere_lista(token novoToken, ListaOperadores* lista) {
     lista->operadores[lista->tamanho - 1] = novoToken;
 }
 
-
-
-
-
-
+/* Trata token de dígito */
 void trata_digito() {
     char num[20] = "";
     char temp[2];
@@ -57,6 +49,7 @@ void trata_digito() {
     strcpy(token_atual.simbolo, "snumero");
 }
 
+/* Trata token de indentificadores ou palavras reservadas */
 void trata_identificador_palavra_reservada() {
     char id[20] = "";
     char temp[2];
@@ -95,9 +88,9 @@ void trata_identificador_palavra_reservada() {
     else if (strcmp(id, "ou") == 0) strcpy(token_atual.simbolo, "sou");
     else if (strcmp(id, "nao") == 0) strcpy(token_atual.simbolo, "snao");
     else strcpy(token_atual.simbolo, "sidentificador");
-
 }
 
+/* Trata token de atribuição */
 void trata_atribuicao() {
     caractere = fgetc(arquivo);
     if(caractere == '=') {
@@ -108,9 +101,9 @@ void trata_atribuicao() {
         strcpy(token_atual.lexema, ":");
         strcpy(token_atual.simbolo, "sdoispontos");
     }
-
 }
 
+/* Trata token de operador aritmético */
 void trata_operador_aritmetico() {
     if(caractere == '+') strcpy(token_atual.simbolo, "smais");
     else if(caractere == '-') strcpy(token_atual.simbolo, "smenos");
@@ -120,6 +113,7 @@ void trata_operador_aritmetico() {
     caractere = fgetc(arquivo);
 }
 
+/* Trata token de operador relacional */
 void trata_operador_relacional() {
     if(caractere == '!') {
         caractere = fgetc(arquivo);
@@ -127,7 +121,10 @@ void trata_operador_relacional() {
             caractere = fgetc(arquivo);
             strcpy(token_atual.lexema, "!=");
             strcpy(token_atual.simbolo, "sdif");
-        } else printf("ERRO: esperado <!=>\n");
+        } else{
+            printf("ERRO: esperado <!=>\n");
+            exit(1);
+        }
     }
     else if(caractere == '<') {
         caractere = fgetc(arquivo);
@@ -156,9 +153,9 @@ void trata_operador_relacional() {
         strcpy(token_atual.simbolo, "sig");
         caractere = fgetc(arquivo);
     }
-
 }
 
+/* Trata token de pontuação */
 void trata_pontuacao() {
     if(caractere == ';') strcpy(token_atual.simbolo, "sponto_virgula");
     else if(caractere == ',') strcpy(token_atual.simbolo, "svirgula");
@@ -168,9 +165,9 @@ void trata_pontuacao() {
 
     snprintf(token_atual.lexema, sizeof(token_atual.lexema), "%c", caractere);
     caractere = fgetc(arquivo);
-
 }
 
+/* Valida o token atual, verificando seu tipo e atribuindo seu simbolo*/
 void pega_token() {
     if (isdigit(caractere)) trata_digito();
     else if (isalpha(caractere)) trata_identificador_palavra_reservada();
@@ -180,10 +177,12 @@ void pega_token() {
     else if (caractere == ';' || caractere == ',' || caractere == '(' || caractere == ')' || caractere == '.') trata_pontuacao();
     else {
         printf(" Erro: caractere invalido <%c>\n", caractere);
+        exit(1);
         caractere = fgetc(arquivo);
     }
 }
 
+/* Trata caracteres lidos do arquivo, removendo espaços e comentários, retornando o token atual */
 int lexico() {
     while(caractere == ' ' || caractere == '\n' || caractere == '\t' || caractere == '{') {
         if(caractere == '\n'){
@@ -195,6 +194,7 @@ int lexico() {
 
                 if(caractere == EOF) {
                     printf(" Erro: Comentario nao fechado\n");
+                    exit(1);
                     return -1;
                 }
             }
